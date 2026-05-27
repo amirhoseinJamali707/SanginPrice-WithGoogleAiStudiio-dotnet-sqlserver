@@ -1,0 +1,54 @@
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;200;300;400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Vazirmatn", ui-sans-serif, system-ui, sans-serif;
+
+  /* Main brand color: Dark Violet (بنفش تیره) */
+  --color-amber-50: #f5f3ff;
+  --color-amber-100: #ede9fe;
+  --color-amber-200: #ddd6fe;
+  --color-amber-300: #c4b5fd;
+  --color-amber-400: #a78bfa;
+  --color-amber-500: #5b21b6; /* Main brand */
+  --color-amber-600: #4c1d95; /* Accent / hover / state */
+  --color-amber-700: #3b0764;
+  --color-amber-800: #2e0a4e;
+  --color-amber-900: #1d033a;
+
+  /* Complementary color: Dark Red (قرمز تیره) */
+  --color-indigo-50: #fef2f2;
+  --color-indigo-100: #fee2e2;
+  --color-indigo-200: #fecaca;
+  --color-indigo-300: #fca5a5;
+  --color-indigo-400: #ef4444;
+  --color-indigo-500: #991b1b; /* Complementary */
+  --color-indigo-600: #7f1d1d; /* Complementary dark / hover */
+  --color-indigo-700: #450a0a;
+  --color-indigo-800: #2b0303;
+  --color-indigo-900: #180000;
+
+  /* Dark color: Charcoal / Pencil lead (رنگ تیره: نوک مدادی) */
+  --color-slate-50: #fafafb; /* Almost white (تقریبا سفید) */
+  --color-slate-100: #f4f4f6;
+  --color-slate-200: #e5e5eb;
+  --color-slate-300: #d1d1db;
+  --color-slate-400: #9999a3;
+  --color-slate-500: #71717a;
+  --color-slate-600: #52525b;
+  --color-slate-700: #3f3f46;
+  --color-slate-800: #262629; /* نوک مدادی */
+  --color-slate-900: #1a1a1c; /* نوک مدادی تیره */
+
+  --color-zinc-50: #fafafb; /* Almost white */
+  --color-zinc-100: #f4f4f6;
+  --color-zinc-200: #e5e5eb;
+  --color-zinc-300: #d1d1db;
+  --color-zinc-400: #9999a3;
+  --color-zinc-500: #71717a;
+  --color-zinc-600: #52525b;
+  --color-zinc-700: #3f3f46;
+  --color-zinc-800: #262629; /* نوک مدادی */
+  --color-zinc-900: #1a1a1c; /* نوک مدادی تیره */
+}
+

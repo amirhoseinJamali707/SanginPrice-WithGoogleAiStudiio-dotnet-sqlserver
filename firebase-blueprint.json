@@ -1,0 +1,53 @@
+{
+  "entities": {
+    "PartInfo": {
+      "title": "Part Information",
+      "description": "General information about a machine part category",
+      "type": "object",
+      "properties": {
+        "PartName": { "type": "string", "description": "Primary name of the part" },
+        "OtherNames": { "type": "string", "description": "Alternative names or keywords" },
+        "PartID": { "type": "string", "description": "Unique identifier for the part category" }
+      },
+      "required": ["PartName", "PartID"]
+    },
+    "ProductPrice": {
+      "title": "Product Price",
+      "description": "Specific product details and its price quotes",
+      "type": "object",
+      "properties": {
+        "PartName": { "type": "string" },
+        "OtherNames": { "type": "string" },
+        "PartID": { "type": "string" },
+        "TargetName": { "type": "string" },
+        "TargetModel": { "type": "string" },
+        "ProductName": { "type": "string" },
+        "PartNumber": { "type": "string" },
+        "ProductInformation": { "type": "string" },
+        "ProductID": { "type": "string" },
+        "SRTID": { "type": "string" },
+        "From": { "type": "string", "description": "User who recorded the price" },
+        "SupplierName": { "type": "string" },
+        "LastPriceUpdateDate": { "type": "string" },
+        "Price": { "type": "string" },
+        "PriceId": { "type": "string" },
+        "Material": { "type": "string" },
+        "DailyDollarRate": { "type": "string" },
+        "EstimatedPrice": { "type": "string" },
+        "PriceValidityDays": { "type": "integer" },
+        "Status": { "type": "string" }
+      },
+      "required": ["ProductName", "ProductID", "PriceId"]
+    }
+  },
+  "firestore": {
+    "parts_name": {
+      "schema": "PartInfo",
+      "description": "Collection of machine part categories"
+    },
+    "product_prices": {
+      "schema": "ProductPrice",
+      "description": "Collection of specific product prices and details"
+    }
+  }
+}
