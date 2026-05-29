@@ -5,6 +5,7 @@ namespace SanginPrice.Business.Interfaces;
 public interface IMachinePartService
 {
     Task<IEnumerable<MachinePartDto>> GetPartsByCategoryAsync(int partId, string? search);
+    Task<IEnumerable<MachinePartDto>> GetPartsByCategoryNameAsync(string categoryName, string? search);
     Task<MachinePartDto?> CreatePartAsync(MachinePartDto dto);
     Task<MachinePartDto?> UpdatePartAsync(int productId, MachinePartDto dto);
     Task<bool> DeletePartAsync(int productId);

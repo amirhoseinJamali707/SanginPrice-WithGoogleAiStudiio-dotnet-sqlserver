@@ -640,7 +640,7 @@ async function startServer() {
       const info = db.part_name.find((p: any) => p.PartName === category);
       if (!info) return res.json([]);
 
-      let filtered = db.product_name.filter((p: any) => p.PartID === info.Id && p.Status !== 'deleted');
+      let filtered = db.product_name.filter((p: any) => String(p.PartID) === String(info.Id) && p.Status !== 'deleted');
 
       if (search) {
         const term = String(search).toLowerCase();
@@ -710,23 +710,23 @@ async function startServer() {
       const actingUsername = String(req.headers['x-username'] || 'admin');
 
       const db = loadDb();
-      const existing = db.product_name.find((p: any) => p.ProductName === ProductName && String(p.Id) !== String(productId) && p.Status !== 'deleted');
+      const existing = db.product_name.find((p: any) => p.ProductName === ProductName && String(p.Id || p.id || p.ProductID || p.productId) !== String(productId) && p.Status !== 'deleted');
       if (existing) {
         return res.status(400).json({ error: 'محصولی با این نام قبلا ثبت شده است' });
       }
 
-      const oldDoc = db.product_name.find((p: any) => String(p.Id) === String(productId));
+      const oldDoc = db.product_name.find((p: any) => String(p.Id || p.id || p.ProductID || p.productId) === String(productId));
       if (!oldDoc) return res.status(404).json({ error: 'محصول یافت نشد' });
 
       db.product_name = db.product_name.map((p: any) => {
-        if (String(p.Id) === String(productId)) {
+        if (String(p.Id || p.id || p.ProductID || p.productId) === String(productId)) {
           return { ...p, TargetName, TargetModel, ProductName, PartNumber, ProductInformation, SRTID };
         }
         return p;
       });
 
       db.product_prices = db.product_prices.map((p: any) => {
-        if (String(p.ProductID) === String(productId)) {
+        if (String(p.ProductID || p.productID || p.productId || p.Id || p.id) === String(productId)) {
           return { ...p, TargetName, TargetModel, ProductName, PartNumber, ProductInformation, SRTID };
         }
         return p;
@@ -745,12 +745,12 @@ async function startServer() {
       const db = loadDb();
 
       db.product_name = db.product_name.map((p: any) => {
-        if (String(p.Id) === String(productId)) return { ...p, Status: 'deleted' };
+        if (String(p.Id || p.id || p.ProductID || p.productId) === String(productId)) return { ...p, Status: 'deleted' };
         return p;
       });
 
       db.product_prices = db.product_prices.map((p: any) => {
-        if (String(p.ProductID) === String(productId)) return { ...p, Status: 'deleted' };
+        if (String(p.ProductID || p.productID || p.productId || p.Id || p.id) === String(productId)) return { ...p, Status: 'deleted' };
         return p;
       });
 

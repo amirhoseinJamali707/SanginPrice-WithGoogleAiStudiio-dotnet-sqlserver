@@ -57,6 +57,10 @@ interface ProductPrice {
   PartNumber?: string;
   PriceId: string;
   Id?: string;
+  id?: string;
+  priceId?: string;
+  PriceID?: string;
+  priceID?: string;
   ProductID?: string;
   SRTID?: string;
   From: string; 
@@ -143,6 +147,52 @@ const mapToPascalCase = (obj: any): any => {
       result[key] = result[pascalKey];
     }
   }
+
+  // Double-safeguarded cross-mappings to satisfy legacy camelCase and casing discrepancies
+  if (result.hasOwnProperty('Id')) {
+    result.id = result.Id;
+    result.ID = result.Id;
+  }
+  if (result.hasOwnProperty('PartID')) {
+    result.partId = result.PartID;
+    result.partID = result.PartID;
+    if (!result.hasOwnProperty('Id')) {
+      result.Id = result.PartID;
+    }
+  }
+  if (result.hasOwnProperty('Id') && !result.hasOwnProperty('PartID')) {
+    result.PartID = result.Id;
+    result.partId = result.Id;
+    result.partID = result.Id;
+  }
+  if (result.hasOwnProperty('ProductID')) {
+    result.productId = result.ProductID;
+    result.productID = result.ProductID;
+    if (!result.hasOwnProperty('id')) {
+      result.id = result.ProductID;
+    }
+  }
+  if (result.hasOwnProperty('Id') && !result.hasOwnProperty('ProductID')) {
+    // If we have an Id and no ProductID (like for MachinePart item), map it too
+    result.ProductID = result.Id;
+    result.productId = result.Id;
+    result.productID = result.Id;
+  }
+  if (result.hasOwnProperty('ProductName')) {
+    result.productName = result.ProductName;
+    result.name = result.ProductName;
+  }
+  if (result.hasOwnProperty('PriceId')) {
+    result.priceId = result.PriceId;
+    result.priceID = result.PriceId;
+  }
+  if (result.hasOwnProperty('SRTPriceID')) {
+    result.srtPriceId = result.SRTPriceID;
+  }
+  if (result.hasOwnProperty('CRMID')) {
+    result.crmId = result.CRMID;
+  }
+
   return result;
 };
 
@@ -227,6 +277,7 @@ const PriceModal = ({
   isOpen, 
   onClose, 
   productName, 
+  productId,
   dollarRate, 
   userName,
   onSuccess,
@@ -235,6 +286,7 @@ const PriceModal = ({
   isOpen: boolean; 
   onClose: () => void; 
   productName: string; 
+  productId?: string | number;
   dollarRate: string;
   userName: string;
   onSuccess: () => void;
@@ -284,7 +336,7 @@ const PriceModal = ({
 
     try {
       const isEdit = !!editData;
-      const url = isEdit ? `/api/quotes/${editData.Id || editData.PriceId}` : '/api/quotes';
+      const url = isEdit ? `/api/quotes/${editData.Id || editData.id || editData.PriceId || editData.priceId || editData.PriceID || editData.priceID}` : '/api/quotes';
       const method = isEdit ? 'PATCH' : 'POST';
 
       const body: any = {
@@ -301,10 +353,11 @@ const PriceModal = ({
       if (!isEdit) {
         // Add fields for NEW quote
         body.ProductName = productName;
+        if (productId) {
+          body.ProductID = Number(productId);
+        }
         body.From = userName;
         body.LastPriceUpdateDate = getPersianDate();
-        body.PriceId = `PR${Math.floor(100000 + Math.random() * 900000)}`;
-        body.Id = body.PriceId;
         body.DailyDollarRate = dollarRate;
         body.EstimatedPrice = "";
       } else {
@@ -659,7 +712,7 @@ const ProductModal = ({
     setError('');
 
     try {
-      const url = editData ? `/api/machine-parts/${editData.productId}` : '/api/machine-parts';
+      const url = editData ? `/api/machine-parts/${editData.Id || editData.id || editData.productId || editData.ProductID}` : '/api/machine-parts';
       const method = editData ? 'PATCH' : 'POST';
       
       const body: any = {
@@ -673,12 +726,9 @@ const ProductModal = ({
 
       if (!editData) {
         // Only for new products
-        const randomDigits = Math.floor(100000 + Math.random() * 900000);
         body.PartName = categoryName;
         body.OtherNames = categoryInfo?.OtherNames;
-        body.PartID = categoryInfo?.Id || categoryInfo?.PartID;
-        body.Id = `PD${randomDigits}`;
-        body.ProductID = `PD${randomDigits}`;
+        body.PartID = Number(categoryInfo?.Id || categoryInfo?.PartID);
       }
 
       const res = await fetch(url, {
@@ -2999,7 +3049,7 @@ const MachinePartListPage = () => {
   const handleDelete = async () => {
     if (!deleteData) return;
     try {
-      const res = await fetch(`/api/machine-parts/${deleteData.productId}`, {
+      const res = await fetch(`/api/machine-parts/${deleteData.Id || deleteData.id || deleteData.productId || deleteData.ProductID}`, {
         method: 'DELETE'
       });
       if (res.ok) {
@@ -3473,6 +3523,11 @@ const PriceQuoteListPage = ({ dollarRate, userName }: { dollarRate: string, user
 
   const srtId = useMemo(() => quotes.find(q => q.SRTID)?.SRTID, [quotes]);
 
+  const actualProductId = useMemo(() => {
+    const q = quotes.find(x => x.ProductID || x.productId);
+    return q ? (q.ProductID || q.productId) : undefined;
+  }, [quotes]);
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     setCopied(true);
@@ -3669,7 +3724,7 @@ const PriceQuoteListPage = ({ dollarRate, userName }: { dollarRate: string, user
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
-                      setDeleteId(q.Id || q.PriceId);
+                      setDeleteId(q.Id || q.id || q.PriceId || q.priceId || q.PriceID || q.priceID);
                     }}
                     className="p-1.5 bg-rose-50 text-rose-500 rounded-lg hover:bg-rose-500 hover:text-white transition-all shadow-sm active:scale-95"
                     title="حذف یا غیرفعال سازی"
@@ -3703,6 +3758,7 @@ const PriceQuoteListPage = ({ dollarRate, userName }: { dollarRate: string, user
         isOpen={isPriceModalOpen}
         onClose={() => setIsPriceModalOpen(false)}
         productName={productTitle || ''}
+        productId={actualProductId}
         dollarRate={dollarRate}
         userName={userName}
         onSuccess={fetchQuotes}

@@ -6,6 +6,7 @@ namespace SanginPrice.Presentation.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Route("api/machine-parts")]
 public class MachinePartsController : ControllerBase
 {
     private readonly IMachinePartService _machService;
@@ -13,6 +14,25 @@ public class MachinePartsController : ControllerBase
     public MachinePartsController(IMachinePartService machService)
     {
         _machService = machService;
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetPartsByQuery([FromQuery] string? category, [FromQuery] string? search)
+    {
+        if (string.IsNullOrWhiteSpace(category))
+        {
+            return BadRequest(new { error = "نام دسته‌بندی (category) الزامی است" });
+        }
+
+        // Check if the client accidentally passed the ID as category param
+        if (int.TryParse(category, out var partId))
+        {
+            var partsById = await _machService.GetPartsByCategoryAsync(partId, search);
+            return Ok(partsById);
+        }
+
+        var parts = await _machService.GetPartsByCategoryNameAsync(category, search);
+        return Ok(parts);
     }
 
     [HttpGet("category/{partId}")]

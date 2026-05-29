@@ -58,6 +58,13 @@ public class MachinePartService : IMachinePartService
         });
     }
 
+    public async Task<IEnumerable<MachinePartDto>> GetPartsByCategoryNameAsync(string categoryName, string? search)
+    {
+        var category = await _context.ProductCategories.FirstOrDefaultAsync(c => c.PartName.ToLower() == categoryName.Trim().ToLower());
+        if (category == null) return Enumerable.Empty<MachinePartDto>();
+        return await GetPartsByCategoryAsync(category.Id, search);
+    }
+
     public async Task<MachinePartDto?> CreatePartAsync(MachinePartDto dto)
     {
         if (string.IsNullOrWhiteSpace(dto.ProductName)) return null;

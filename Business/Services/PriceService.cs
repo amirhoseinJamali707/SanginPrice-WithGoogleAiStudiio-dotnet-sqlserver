@@ -53,11 +53,29 @@ public class PriceService : IPriceService
         return list.Select(x => MapToDto(x.p, x.m, x.c));
     }
 
+    public async Task<IEnumerable<ProductPriceDto>> GetPricesByProductNameAsync(string productName, string username)
+    {
+        var product = await _context.MachineParts.FirstOrDefaultAsync(m => m.ProductName.ToLower() == productName.Trim().ToLower());
+        if (product == null) return Enumerable.Empty<ProductPriceDto>();
+        return await GetPricesByProductAsync(product.Id, username);
+    }
+
     public async Task<ProductPriceDto?> AddPriceAsync(ProductPriceDto dto, string username)
     {
         if (string.IsNullOrWhiteSpace(dto.Price)) return null;
 
-        var product = await _context.MachineParts.FirstOrDefaultAsync(m => m.Id == dto.ProductID);
+        MachinePart? product = null;
+        if (dto.ProductID > 0)
+        {
+            product = await _context.MachineParts.FirstOrDefaultAsync(m => m.Id == dto.ProductID);
+        }
+
+        if (product == null && !string.IsNullOrWhiteSpace(dto.ProductName))
+        {
+            product = await _context.MachineParts
+                .FirstOrDefaultAsync(m => m.ProductName.ToLower() == dto.ProductName.Trim().ToLower());
+        }
+
         if (product == null) return null;
 
         var category = await _context.ProductCategories.FirstOrDefaultAsync(c => c.Id == product.PartID);
@@ -65,7 +83,7 @@ public class PriceService : IPriceService
 
         var price = new ProductPrice
         {
-            ProductID = dto.ProductID,
+            ProductID = product.Id,
             PriceStatus = "active",
             LastPriceUpdateDate = GetPersianDateNow(),
             Price = dto.Price.Replace(",", ""),

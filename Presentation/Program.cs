@@ -140,9 +140,9 @@ app.MapControllers();
 
 using (var scope = app.Services.CreateScope())
 {
-    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     try
     {
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         // First try standard EnsureCreated
         context.Database.EnsureCreated();
 

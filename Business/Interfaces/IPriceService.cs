@@ -5,6 +5,7 @@ namespace SanginPrice.Business.Interfaces;
 public interface IPriceService
 {
     Task<IEnumerable<ProductPriceDto>> GetPricesByProductAsync(int productId, string username);
+    Task<IEnumerable<ProductPriceDto>> GetPricesByProductNameAsync(string productName, string username);
     Task<ProductPriceDto?> AddPriceAsync(ProductPriceDto dto, string username);
     Task<ProductPriceDto?> UpdatePriceAsync(int priceId, ProductPriceDto dto, string username);
     Task<bool> DeletePriceAsync(int priceId, string username);

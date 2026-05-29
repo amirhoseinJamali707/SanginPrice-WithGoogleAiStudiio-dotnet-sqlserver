@@ -15,6 +15,26 @@ public class PricesController : ControllerBase
         _priceService = priceService;
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetPricesByQuery([FromQuery] string? title, [FromHeader] string? username)
+    {
+        var activeUser = username ?? "Admin";
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return BadRequest(new { error = "نام محصول (title) الزامی است" });
+        }
+
+        // Try to parse title as an integer first, in case the client passes ProductID as parameter
+        if (int.TryParse(title, out var productId))
+        {
+            var pricesById = await _priceService.GetPricesByProductAsync(productId, activeUser);
+            return Ok(pricesById);
+        }
+
+        var prices = await _priceService.GetPricesByProductNameAsync(title, activeUser);
+        return Ok(prices);
+    }
+
     [HttpGet("product/{productId}")]
     public async Task<IActionResult> GetPrices(int productId, [FromHeader] string? username)
     {
