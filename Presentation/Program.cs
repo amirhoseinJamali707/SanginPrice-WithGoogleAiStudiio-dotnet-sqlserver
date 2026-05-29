@@ -8,11 +8,7 @@ using SanginPrice.DataAccess;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.PropertyNamingPolicy = null;
-    });
+builder.Services.AddControllers();
 
 // Configure SQL Server connection
 builder.Services.AddDbContext<AppDbContext>(options =>

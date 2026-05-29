@@ -44,6 +44,7 @@ interface ProductInfo {
   PartName: string;
   OtherNames: string;
   PartID: string;
+  Id?: string;
   PartCollection?: string;
 }
 
@@ -55,6 +56,7 @@ interface ProductPrice {
   ProductInformation?: string;
   PartNumber?: string;
   PriceId: string;
+  Id?: string;
   ProductID?: string;
   SRTID?: string;
   From: string; 
@@ -107,6 +109,41 @@ const getPersianDate = () => {
   };
   const formatter = new Intl.DateTimeFormat('fa-IR', option);
   return formatter.format(now);
+};
+
+const mapToPascalCase = (obj: any): any => {
+  if (!obj || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) {
+    return obj.map(mapToPascalCase);
+  }
+  const result: any = {};
+  for (const key of Object.keys(obj)) {
+    let pascalKey = key;
+    if (key.length > 0) {
+      if (key === 'id') {
+        pascalKey = 'Id';
+      } else if (key === 'partID' || key === 'partId') {
+        pascalKey = 'PartID';
+      } else if (key === 'productID' || key === 'productId') {
+        pascalKey = 'ProductID';
+      } else if (key === 'priceID' || key === 'priceId') {
+        pascalKey = 'PriceId';
+      } else if (key === 'srtID' || key === 'srtId') {
+        pascalKey = 'SRTID';
+      } else if (key === 'srtPriceID' || key === 'srtPriceId') {
+        pascalKey = 'SRTPriceID';
+      } else if (key === 'crmID' || key === 'crmId') {
+        pascalKey = 'CRMID';
+      } else {
+        pascalKey = key.charAt(0).toUpperCase() + key.slice(1);
+      }
+    }
+    result[pascalKey] = mapToPascalCase(obj[key]);
+    if (pascalKey !== key) {
+      result[key] = result[pascalKey];
+    }
+  }
+  return result;
 };
 
 // --- Components ---
@@ -247,7 +284,7 @@ const PriceModal = ({
 
     try {
       const isEdit = !!editData;
-      const url = isEdit ? `/api/quotes/${editData.PriceId}` : '/api/quotes';
+      const url = isEdit ? `/api/quotes/${editData.Id || editData.PriceId}` : '/api/quotes';
       const method = isEdit ? 'PATCH' : 'POST';
 
       const body: any = {
@@ -267,6 +304,7 @@ const PriceModal = ({
         body.From = userName;
         body.LastPriceUpdateDate = getPersianDate();
         body.PriceId = `PR${Math.floor(100000 + Math.random() * 900000)}`;
+        body.Id = body.PriceId;
         body.DailyDollarRate = dollarRate;
         body.EstimatedPrice = "";
       } else {
@@ -638,7 +676,8 @@ const ProductModal = ({
         const randomDigits = Math.floor(100000 + Math.random() * 900000);
         body.PartName = categoryName;
         body.OtherNames = categoryInfo?.OtherNames;
-        body.PartID = categoryInfo?.PartID;
+        body.PartID = categoryInfo?.Id || categoryInfo?.PartID;
+        body.Id = `PD${randomDigits}`;
         body.ProductID = `PD${randomDigits}`;
       }
 
@@ -1589,7 +1628,8 @@ const ProductCategoryPage = () => {
       if (searchTerm2) params.append('search2', searchTerm2);
       
       const res = await fetch(`/api/categories?${params.toString()}`);
-      const data = await res.json();
+      const rawData = await res.json();
+      const data = mapToPascalCase(rawData);
       if (Array.isArray(data)) {
         setProducts(data);
       } else {
@@ -1631,7 +1671,7 @@ const ProductCategoryPage = () => {
     setFormError('');
     try {
       const url = modalMode === 'edit' && selectedCategory 
-        ? `/api/categories/${selectedCategory.PartID}` 
+        ? `/api/categories/${selectedCategory.Id || selectedCategory.PartID}` 
         : '/api/categories';
       const method = modalMode === 'edit' ? 'PATCH' : 'POST';
 
@@ -1670,7 +1710,7 @@ const ProductCategoryPage = () => {
     setDeleteLoading(true);
     setDeleteError('');
     try {
-      const res = await fetch(`/api/categories/${selectedCategory.PartID}`, {
+      const res = await fetch(`/api/categories/${selectedCategory.Id || selectedCategory.PartID}`, {
         method: 'DELETE'
       });
       if (res.ok) {
@@ -2260,7 +2300,7 @@ const ProductCategoryPage = () => {
         <div className="max-h-[60vh] overflow-y-auto divide-y divide-slate-50">
           {products.map((p, idx) => (
             <motion.div 
-              key={p.PartID}
+              key={p.Id || p.PartID}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: idx * 0.05 }}
@@ -2924,7 +2964,8 @@ const MachinePartListPage = () => {
       if (searchTerm) params.append('search', searchTerm);
       
       const res = await fetch(`/api/machine-parts?${params.toString()}`);
-      const data = await res.json();
+      const rawData = await res.json();
+      const data = mapToPascalCase(rawData);
       if (Array.isArray(data)) {
         setItems(data);
       } else {
@@ -2941,7 +2982,8 @@ const MachinePartListPage = () => {
   const fetchCategoryInfo = async () => {
     try {
       const res = await fetch(`/api/categories?search1=${categoryName}`);
-      const data = await res.json();
+      const rawData = await res.json();
+      const data = mapToPascalCase(rawData);
       const info = data.find((p: ProductInfo) => p.PartName === categoryName);
       if (info) {
         setCategoryInfo(info);
@@ -3388,7 +3430,7 @@ const QuoteDetailModal = ({
 
             <div className="flex justify-between items-center">
               <span className="text-xs font-bold text-slate-400">شناسه قیمت</span>
-              <span className="font-mono text-slate-500 text-xs font-semibold">{q.PriceId}</span>
+              <span className="font-mono text-slate-500 text-xs font-semibold">{q.Id || q.PriceId}</span>
             </div>
           </div>
 
@@ -3444,7 +3486,8 @@ const PriceQuoteListPage = ({ dollarRate, userName }: { dollarRate: string, user
       if (searchTerm) params.append('search', searchTerm);
       
       const res = await fetch(`/api/quotes?${params.toString()}`);
-      const data = await res.json();
+      const rawData = await res.json();
+      const data = mapToPascalCase(rawData);
       if (Array.isArray(data)) {
         setQuotes(data);
         const firstQuote = data.find((q: any) => q.ProductID);
@@ -3532,7 +3575,7 @@ const PriceQuoteListPage = ({ dollarRate, userName }: { dollarRate: string, user
           const { shouldShowEstimatedPrice, calculatedEstimatedPrice } = getEstimatedPriceInfo(q, dollarRate);
           return (
             <motion.div 
-              key={q.PriceId}
+              key={q.Id || q.PriceId}
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: idx * 0.05 }}
@@ -3626,7 +3669,7 @@ const PriceQuoteListPage = ({ dollarRate, userName }: { dollarRate: string, user
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
-                      setDeleteId(q.PriceId);
+                      setDeleteId(q.Id || q.PriceId);
                     }}
                     className="p-1.5 bg-rose-50 text-rose-500 rounded-lg hover:bg-rose-500 hover:text-white transition-all shadow-sm active:scale-95"
                     title="حذف یا غیرفعال سازی"

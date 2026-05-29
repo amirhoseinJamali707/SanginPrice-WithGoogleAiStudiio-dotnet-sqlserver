@@ -65,6 +65,41 @@ const formatPersianDateTime = (dateStr: string) => {
   return new Intl.DateTimeFormat('fa-IR', option).format(date);
 };
 
+const mapToPascalCase = (obj: any): any => {
+  if (!obj || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) {
+    return obj.map(mapToPascalCase);
+  }
+  const result: any = {};
+  for (const key of Object.keys(obj)) {
+    let pascalKey = key;
+    if (key.length > 0) {
+      if (key === 'id') {
+        pascalKey = 'Id';
+      } else if (key === 'partID' || key === 'partId') {
+        pascalKey = 'PartID';
+      } else if (key === 'productID' || key === 'productId') {
+        pascalKey = 'ProductID';
+      } else if (key === 'priceID' || key === 'priceId') {
+        pascalKey = 'PriceId';
+      } else if (key === 'srtID' || key === 'srtId') {
+        pascalKey = 'SRTID';
+      } else if (key === 'srtPriceID' || key === 'srtPriceId') {
+        pascalKey = 'SRTPriceID';
+      } else if (key === 'crmID' || key === 'crmId') {
+        pascalKey = 'CRMID';
+      } else {
+        pascalKey = key.charAt(0).toUpperCase() + key.slice(1);
+      }
+    }
+    result[pascalKey] = mapToPascalCase(obj[key]);
+    if (pascalKey !== key) {
+      result[key] = result[pascalKey];
+    }
+  }
+  return result;
+};
+
 export const ReportsPage = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -123,7 +158,8 @@ export const ReportsPage = () => {
       if (!res.ok) {
         throw new Error('خطا در دریافت گزارشات از سرور');
       }
-      const data = await res.json();
+      const rawData = await res.json();
+      const data = mapToPascalCase(rawData);
       setStats(data.userStats || []);
       setSummary(data.summary || { priceUpdatesToday: 0, activeUserToday: 'بدون فعالیت' });
     } catch (err: any) {
@@ -140,7 +176,8 @@ export const ReportsPage = () => {
     try {
       const res = await fetch(`/api/reports/top-views?type=${topViewsType}&range=${topViewsRange}&page=${topViewsPage}&limit=30`);
       if (res.ok) {
-        const data = await res.json();
+        const rawData = await res.json();
+        const data = mapToPascalCase(rawData);
         setTopViewsData(data);
       } else {
         throw new Error('خطا در بارگذاری');
@@ -637,7 +674,7 @@ export const ReportsPage = () => {
                             </td>
 
                             <td className="py-3.5 px-5 font-mono text-xs text-slate-500">
-                              {topViewsType === 'part' ? item.PartID : item.ProductID}
+                              {topViewsType === 'part' ? (item.Id || item.PartID) : (item.Id || item.ProductID)}
                             </td>
 
                             {topViewsType === 'product' && (

@@ -7,15 +7,47 @@
       "properties": {
         "PartName": { "type": "string", "description": "Primary name of the part" },
         "OtherNames": { "type": "string", "description": "Alternative names or keywords" },
-        "PartID": { "type": "string", "description": "Unique identifier for the part category" }
+        "Id": { "type": "string", "description": "Unique identifier for the part category" },
+        "PartCollection": { "type": "string" },
+        "view_count": { "type": "integer" },
+        "views_1month": { "type": "integer" },
+        "views_3months": { "type": "integer" },
+        "views_6months": { "type": "integer" },
+        "views_1year": { "type": "integer" }
       },
-      "required": ["PartName", "PartID"]
+      "required": ["PartName", "Id"]
+    },
+    "ProductInfo": {
+      "title": "Product Details",
+      "description": "Information about a specific machine part/product",
+      "type": "object",
+      "properties": {
+        "Id": { "type": "string", "description": "Unique identifier for the product" },
+        "PartID": { "type": "string", "description": "Foreign key pointing to the part category Id" },
+        "PartName": { "type": "string" },
+        "OtherNames": { "type": "string" },
+        "TargetName": { "type": "string" },
+        "TargetModel": { "type": "string" },
+        "ProductName": { "type": "string" },
+        "PartNumber": { "type": "string" },
+        "ProductInformation": { "type": "string" },
+        "SRTID": { "type": "string" },
+        "Status": { "type": "string" },
+        "view_count": { "type": "integer" },
+        "views_1month": { "type": "integer" },
+        "views_3months": { "type": "integer" },
+        "views_6months": { "type": "integer" },
+        "views_1year": { "type": "integer" }
+      },
+      "required": ["ProductName", "Id", "PartID"]
     },
     "ProductPrice": {
       "title": "Product Price",
       "description": "Specific product details and its price quotes",
       "type": "object",
       "properties": {
+        "Id": { "type": "string", "description": "Unique identifier for the price record" },
+        "ProductID": { "type": "string", "description": "Foreign key pointing to the product Id" },
         "PartName": { "type": "string" },
         "OtherNames": { "type": "string" },
         "PartID": { "type": "string" },
@@ -24,26 +56,31 @@
         "ProductName": { "type": "string" },
         "PartNumber": { "type": "string" },
         "ProductInformation": { "type": "string" },
-        "ProductID": { "type": "string" },
         "SRTID": { "type": "string" },
         "From": { "type": "string", "description": "User who recorded the price" },
         "SupplierName": { "type": "string" },
         "LastPriceUpdateDate": { "type": "string" },
         "Price": { "type": "string" },
-        "PriceId": { "type": "string" },
         "Material": { "type": "string" },
         "DailyDollarRate": { "type": "string" },
         "EstimatedPrice": { "type": "string" },
         "PriceValidityDays": { "type": "integer" },
-        "Status": { "type": "string" }
+        "Status": { "type": "string" },
+        "SRTPriceID": { "type": "string" },
+        "CRMID": { "type": "string" },
+        "ShelfNumber": { "type": "string" }
       },
-      "required": ["ProductName", "ProductID", "PriceId"]
+      "required": ["ProductName", "ProductID", "Id"]
     }
   },
   "firestore": {
-    "parts_name": {
+    "part_name": {
       "schema": "PartInfo",
       "description": "Collection of machine part categories"
+    },
+    "product_name": {
+      "schema": "ProductInfo",
+      "description": "Collection of specific machine parts / products"
     },
     "product_prices": {
       "schema": "ProductPrice",

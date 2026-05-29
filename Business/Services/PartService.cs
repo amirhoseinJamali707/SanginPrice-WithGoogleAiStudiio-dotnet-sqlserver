@@ -36,7 +36,7 @@ public class PartService : IPartService
         var list = await query.ToListAsync();
         return list.Select(c => new ProductCategoryDto
         {
-            PartID = c.Id,
+            Id = c.Id,
             PartName = c.PartName,
             OtherNames = c.OtherNames,
             PartCollection = c.PartCollection
@@ -63,7 +63,7 @@ public class PartService : IPartService
         _context.ProductCategories.Add(cat);
         await _context.SaveChangesAsync();
 
-        dto.PartID = cat.Id;
+        dto.Id = cat.Id;
         return dto;
     }
 
@@ -85,7 +85,7 @@ public class PartService : IPartService
         cat.PartCollection = dto.PartCollection?.Trim();
 
         await _context.SaveChangesAsync();
-        dto.PartID = partId;
+        dto.Id = partId;
         return dto;
     }
 
@@ -166,7 +166,7 @@ public class PartService : IPartService
 
                 var savedDto = new ProductCategoryDto
                 {
-                    PartID = cat.Id,
+                    Id = cat.Id,
                     PartName = partName,
                     OtherNames = normalizedOthers,
                     PartCollection = cat.PartCollection

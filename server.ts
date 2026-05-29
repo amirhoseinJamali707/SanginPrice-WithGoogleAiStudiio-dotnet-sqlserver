@@ -7,9 +7,9 @@ import { createServer as createViteServer } from 'vite';
 const DB_FILE = path.join(process.cwd(), 'data', 'local_db.json');
 
 const default_products_info = [
-  { PartName: "پمپ هیدرولیک", OtherNames: "Hydraulic Pump, پمپ اصلی", PartID: "CAT-001", PartCollection: "کوماتسو", view_count: 120, views_1month: 40, views_3months: 80, views_6months: 100, views_1year: 120 },
-  { PartName: "موتور دیزل", OtherNames: "Engine, موتور اصلی", PartID: "CAT-002", PartCollection: "کلو", view_count: 95, views_1month: 30, views_3months: 60, views_6months: 80, views_1year: 95 },
-  { PartName: "جک هیدرولیک", OtherNames: "Cylinder, جک بالابر", PartID: "CAT-003", PartCollection: "کلمنس", view_count: 75, views_1month: 25, views_3months: 50, views_6months: 65, views_1year: 75 }
+  { PartName: "پمپ هیدرولیک", OtherNames: "Hydraulic Pump, پمپ اصلی", Id: "CAT-001", PartCollection: "کوماتسو", view_count: 120, views_1month: 40, views_3months: 80, views_6months: 100, views_1year: 120 },
+  { PartName: "موتور دیزل", OtherNames: "Engine, موتور اصلی", Id: "CAT-002", PartCollection: "کلو", view_count: 95, views_1month: 30, views_3months: 60, views_6months: 80, views_1year: 95 },
+  { PartName: "جک هیدرولیک", OtherNames: "Cylinder, جک بالابر", Id: "CAT-003", PartCollection: "کلمنس", view_count: 75, views_1month: 25, views_3months: 50, views_6months: 65, views_1year: 75 }
 ];
 
 const default_products_db_list = [
@@ -22,7 +22,7 @@ const default_products_db_list = [
     ProductName: "پمپ هیدرولیک PC220-7",
     PartNumber: "708-2L-00300",
     ProductInformation: "پمپ هیدرولیک اصلی کوماتسو سری ۷",
-    ProductID: "PD123456",
+    Id: "PD123456",
     SRTID: "SRT-101",
     Status: "New",
     view_count: 85,
@@ -48,7 +48,7 @@ const default_product_prices = [
     Status: "New",
     LastPriceUpdateDate: "۱۴۰۳/۰۲/۲۸",
     Price: "120000000",
-    PriceId: "PR99901",
+    Id: "PR99901",
     SupplierName: "فروشگاه مرکزی دنا",
     From: "Admin",
     DailyDollarRate: "64,200",
@@ -116,8 +116,8 @@ function loadDb() {
   }
 
   const initialDb = {
-    products_info: default_products_info,
-    products_db_list: default_products_db_list,
+    part_name: default_products_info,
+    product_name: default_products_db_list,
     product_prices: default_product_prices,
     roles: default_roles,
     users: default_users,
@@ -461,7 +461,7 @@ async function startServer() {
     try {
       const { search1, search2 } = req.query;
       const db = loadDb();
-      let filtered = [...db.products_info];
+      let filtered = [...db.part_name];
 
       if (search1) {
         const term = String(search1).toLowerCase();
@@ -497,24 +497,24 @@ async function startServer() {
       const cleanOtherNames = OtherNames ? OtherNames.trim() : '';
       const cleanPartCollection = PartCollection ? String(PartCollection).trim() : '';
 
-      const duplicate = db.products_info.some((p: any) => p.PartName.toLowerCase() === cleanPartName.toLowerCase());
+      const duplicate = db.part_name.some((p: any) => p.PartName.toLowerCase() === cleanPartName.toLowerCase());
       if (duplicate) {
         return res.status(400).json({ error: 'قطعه‌ای با این نام قبلا ثبت شده است' });
       }
 
-      const PartID = `pt${Math.floor(100000 + Math.random() * 900000)}`;
+      const Id = `pt${Math.floor(100000 + Math.random() * 900000)}`;
       const newCategory = {
         PartName: cleanPartName,
         OtherNames: cleanOtherNames,
-        PartID,
+        Id,
         PartCollection: cleanPartCollection,
         view_count: 0, views_1month: 0, views_3months: 0, views_6months: 0, views_1year: 0
       };
 
-      db.products_info.push(newCategory);
+      db.part_name.push(newCategory);
       saveDb(db);
 
-      res.status(201).json({ success: true, PartID, PartName: cleanPartName, OtherNames: cleanOtherNames, PartCollection: cleanPartCollection });
+      res.status(201).json({ success: true, Id, PartName: cleanPartName, OtherNames: cleanOtherNames, PartCollection: cleanPartCollection });
     } catch (err) {
       res.status(500).json({ error: 'خطا در ثبت قطعه' });
     }
@@ -530,18 +530,18 @@ async function startServer() {
       }
 
       const db = loadDb();
-      const idx = db.products_info.findIndex((p: any) => String(p.PartID) === String(partId));
+      const idx = db.part_name.findIndex((p: any) => String(p.Id) === String(partId));
       if (idx === -1) return res.status(404).json({ error: 'قطعه پیدا نشد' });
 
       const cleanPartName = PartName.trim();
-      const duplicate = db.products_info.some((p: any) => String(p.PartID) !== String(partId) && p.PartName.toLowerCase() === cleanPartName.toLowerCase());
+      const duplicate = db.part_name.some((p: any) => String(p.Id) !== String(partId) && p.PartName.toLowerCase() === cleanPartName.toLowerCase());
       if (duplicate) {
         return res.status(400).json({ error: 'قطعه‌ای با این نام قبلا ثبت شده است' });
       }
 
-      db.products_info[idx].PartName = cleanPartName;
-      db.products_info[idx].OtherNames = OtherNames || '';
-      db.products_info[idx].PartCollection = PartCollection || '';
+      db.part_name[idx].PartName = cleanPartName;
+      db.part_name[idx].OtherNames = OtherNames || '';
+      db.part_name[idx].PartCollection = PartCollection || '';
 
       db.product_prices.forEach((pr: any) => {
         if (String(pr.PartID) === String(partId)) {
@@ -551,7 +551,7 @@ async function startServer() {
       });
 
       saveDb(db);
-      res.json({ success: true, PartID: partId, PartName: cleanPartName, OtherNames: OtherNames || '', PartCollection: PartCollection || '' });
+      res.json({ success: true, Id: partId, PartName: cleanPartName, OtherNames: OtherNames || '', PartCollection: PartCollection || '' });
     } catch (err) {
       res.status(500).json({ error: 'خطا در بروزرسانی قطعه' });
     }
@@ -562,10 +562,10 @@ async function startServer() {
       const { partId } = req.params;
       const db = loadDb();
 
-      const idx = db.products_info.findIndex((p: any) => String(p.PartID) === String(partId));
+      const idx = db.part_name.findIndex((p: any) => String(p.Id) === String(partId));
       if (idx === -1) return res.status(404).json({ error: 'قطعه پیدا نشد' });
 
-      db.products_info.splice(idx, 1);
+      db.part_name.splice(idx, 1);
       db.product_prices = db.product_prices.filter((p: any) => String(p.PartID) !== String(partId));
 
       saveDb(db);
@@ -579,7 +579,7 @@ async function startServer() {
     try {
       const items = req.body;
       if (!Array.isArray(items)) {
-        return res.status(400).json({ error: 'باید آرایه باشد' });
+         return res.status(400).json({ error: 'باید آرایه باشد' });
       }
 
       const db = loadDb();
@@ -597,23 +597,23 @@ async function startServer() {
           continue;
         }
 
-        const duplicate = db.products_info.some((p: any) => p.PartName.toLowerCase() === nameInput.toLowerCase());
+        const duplicate = db.part_name.some((p: any) => p.PartName.toLowerCase() === nameInput.toLowerCase());
         if (duplicate) {
           skipped.push(nameInput);
           failedList.push({ ...item, Reason: 'تکراری' });
           continue;
         }
 
-        const PartID = `pt${Math.floor(100000 + Math.random() * 900000)}`;
+        const Id = `pt${Math.floor(100000 + Math.random() * 900000)}`;
         const newCat = {
           PartName: nameInput,
           OtherNames: otherNamesRaw,
-          PartID,
+          Id,
           PartCollection: partCollectionRaw,
           view_count: 0, views_1month: 0, views_3months: 0, views_6months: 0, views_1year: 0
         };
 
-        db.products_info.push(newCat);
+        db.part_name.push(newCat);
         results.push(newCat);
       }
 
@@ -637,10 +637,10 @@ async function startServer() {
       const { category, search } = req.query;
       const db = loadDb();
 
-      const info = db.products_info.find((p: any) => p.PartName === category);
+      const info = db.part_name.find((p: any) => p.PartName === category);
       if (!info) return res.json([]);
 
-      let filtered = db.products_db_list.filter((p: any) => p.PartID === info.PartID && p.Status !== 'deleted');
+      let filtered = db.product_name.filter((p: any) => p.PartID === info.Id && p.Status !== 'deleted');
 
       if (search) {
         const term = String(search).toLowerCase();
@@ -654,7 +654,8 @@ async function startServer() {
       const results = filtered.map((item: any) => ({
         name: item.ProductName,
         srtId: item.SRTID,
-        productId: item.ProductID,
+        productId: item.Id,
+        id: item.Id,
         targetName: item.TargetName,
         targetModel: item.TargetModel,
         partNumber: item.PartNumber,
@@ -669,11 +670,11 @@ async function startServer() {
 
   app.post('/api/machine-parts', (req, res) => {
     try {
-      const { PartName, OtherNames, PartID, TargetName, TargetModel, ProductName, PartNumber, ProductInformation, ProductID, SRTID } = req.body;
+      const { PartName, OtherNames, PartID, TargetName, TargetModel, ProductName, PartNumber, ProductInformation, Id, SRTID } = req.body;
       const actingUsername = String(req.headers['x-username'] || 'admin');
 
       const db = loadDb();
-      const existing = db.products_db_list.find((p: any) => p.ProductName === ProductName && p.Status !== 'deleted');
+      const existing = db.product_name.find((p: any) => p.ProductName === ProductName && p.Status !== 'deleted');
       if (existing) {
         return res.status(400).json({ error: 'محصولی با این نام قبلا ثبت شده است' });
       }
@@ -687,15 +688,14 @@ async function startServer() {
         ProductName,
         PartNumber,
         ProductInformation,
-        ProductID: ProductID || `PD${Math.floor(100000 + Math.random() * 900000)}`,
+        Id: Id || `PD${Math.floor(100000 + Math.random() * 900000)}`,
         SRTID,
         Status: 'New',
         view_count: 0, views_1month: 0, views_3months: 0, views_6months: 0, views_1year: 0
       };
 
-      db.products_db_list.push(newProduct);
-      logActivity(db, actingUsername, 'insert_product', newProduct.ProductID, 'Product', `کاربر ${actingUsername} محصول جدید "${ProductName}" را ثبت کرد.`);
-      saveDb(db);
+      db.product_name.push(newProduct);
+      logActivity(db, actingUsername, 'insert_product', newProduct.Id, 'Product', `کاربر ${actingUsername} محصول جدید "${ProductName}" را ثبت کرد.`);
 
       res.json({ success: true, product: newProduct });
     } catch (err) {
@@ -710,16 +710,16 @@ async function startServer() {
       const actingUsername = String(req.headers['x-username'] || 'admin');
 
       const db = loadDb();
-      const existing = db.products_db_list.find((p: any) => p.ProductName === ProductName && String(p.ProductID) !== String(productId) && p.Status !== 'deleted');
+      const existing = db.product_name.find((p: any) => p.ProductName === ProductName && String(p.Id) !== String(productId) && p.Status !== 'deleted');
       if (existing) {
         return res.status(400).json({ error: 'محصولی با این نام قبلا ثبت شده است' });
       }
 
-      const oldDoc = db.products_db_list.find((p: any) => String(p.ProductID) === String(productId));
+      const oldDoc = db.product_name.find((p: any) => String(p.Id) === String(productId));
       if (!oldDoc) return res.status(404).json({ error: 'محصول یافت نشد' });
 
-      db.products_db_list = db.products_db_list.map((p: any) => {
-        if (String(p.ProductID) === String(productId)) {
+      db.product_name = db.product_name.map((p: any) => {
+        if (String(p.Id) === String(productId)) {
           return { ...p, TargetName, TargetModel, ProductName, PartNumber, ProductInformation, SRTID };
         }
         return p;
@@ -733,7 +733,6 @@ async function startServer() {
       });
 
       logActivity(db, actingUsername, 'update_product', productId, 'Product', `کاربر ${actingUsername} مشخصات محصول "${ProductName}" را ویرایش نمود.`, { old: oldDoc, new: { TargetName, TargetModel, ProductName, PartNumber, ProductInformation, SRTID } });
-      saveDb(db);
       res.json({ success: true });
     } catch (err) {
       res.status(500).json({ error: 'خطا در ویرایش محصول' });
@@ -745,8 +744,8 @@ async function startServer() {
       const { productId } = req.params;
       const db = loadDb();
 
-      db.products_db_list = db.products_db_list.map((p: any) => {
-        if (String(p.ProductID) === String(productId)) return { ...p, Status: 'deleted' };
+      db.product_name = db.product_name.map((p: any) => {
+        if (String(p.Id) === String(productId)) return { ...p, Status: 'deleted' };
         return p;
       });
 
@@ -786,14 +785,14 @@ async function startServer() {
           continue;
         }
 
-        const duplicate = db.products_db_list.some((p: any) => p.ProductName.toLowerCase() === productName.toLowerCase() && p.Status !== 'deleted');
+        const duplicate = db.product_name.some((p: any) => p.ProductName.toLowerCase() === productName.toLowerCase() && p.Status !== 'deleted');
         if (duplicate) {
           failed.push({ ...item, Error: 'تکراری' });
           continue;
         }
 
         // Match with category
-        const matchedCategory = db.products_info.find((cat: any) => {
+        const matchedCategory = db.part_name.find((cat: any) => {
           const catName = (cat.PartName || '').toLowerCase().trim();
           const target = targetNameRaw.toLowerCase().trim();
           const matchesList = (cat.OtherNames || '').split(/[,،]/).map((n: string) => n.trim().toLowerCase());
@@ -805,23 +804,23 @@ async function startServer() {
           continue;
         }
 
-        const ProductID = `PD${Math.floor(100000 + Math.random() * 900000)}`;
+        const Id = `PD${Math.floor(100000 + Math.random() * 900000)}`;
         const newProd = {
           PartName: matchedCategory.PartName,
           OtherNames: matchedCategory.OtherNames || '',
-          PartID: matchedCategory.PartID,
+          PartID: matchedCategory.Id,
           TargetName: targetNameRaw,
           TargetModel: targetModelRaw,
           ProductName: productName,
           PartNumber: partNumberRaw,
           ProductInformation: infoRaw,
-          ProductID,
+          Id,
           SRTID: srtidRaw,
           Status: 'New',
           view_count: 0, views_1month: 0, views_3months: 0, views_6months: 0, views_1year: 0
         };
 
-        db.products_db_list.push(newProd);
+        db.product_name.push(newProd);
         results.push(newProd);
       }
 
@@ -872,12 +871,11 @@ async function startServer() {
       const actingUsername = String(req.headers['x-username'] || 'admin');
 
       const db = loadDb();
-      const productInfo = db.products_db_list.find((p: any) => p.ProductName === data.ProductName);
-      const newQuote = { ...productInfo, ...data };
+      const productInfo = db.product_name.find((p: any) => p.ProductName === data.ProductName);
+      const newQuote = { ...productInfo, ...data, Id: data.Id || data.PriceId || `PR${Math.floor(100000 + Math.random() * 900000)}` };
 
       db.product_prices.push(newQuote);
-      logActivity(db, actingUsername, 'insert_price', data.PriceId || 'PRQ_NEW', 'price', `کاربر ${actingUsername} قیمت جدید "${data.Price}" ریال برای محصول "${data.ProductName}" ثبت کرد.`);
-      saveDb(db);
+      logActivity(db, actingUsername, 'insert_price', newQuote.Id || 'PRQ_NEW', 'price', `کاربر ${actingUsername} قیمت جدید "${data.Price}" ریال برای محصول "${data.ProductName}" ثبت کرد.`);
 
       res.json({ success: true, quote: newQuote });
     } catch (err) {
@@ -892,15 +890,14 @@ async function startServer() {
       const actingUsername = String(req.headers['x-username'] || 'admin');
 
       const db = loadDb();
-      const oldDoc = db.product_prices.find((p: any) => String(p.PriceId) === String(priceId));
+      const oldDoc = db.product_prices.find((p: any) => String(p.Id) === String(priceId) || String(p.PriceId) === String(priceId));
 
       db.product_prices = db.product_prices.map((p: any) => {
-        if (String(p.PriceId) === String(priceId)) return { ...p, ...updateData };
+        if (String(p.Id) === String(priceId) || String(p.PriceId) === String(priceId)) return { ...p, ...updateData };
         return p;
       });
 
       logActivity(db, actingUsername, 'update_price', priceId, 'price', `کاربر ${actingUsername} قیمت محصول "${oldDoc ? oldDoc.ProductName : (updateData.ProductName || '')}" را به "${updateData.Price || ''}" تغییر داد.`);
-      saveDb(db);
 
       res.json({ success: true });
     } catch (err) {
@@ -915,7 +912,7 @@ async function startServer() {
 
       const db = loadDb();
       db.product_prices = db.product_prices.map((p: any) => {
-        if (String(p.PriceId) === String(priceId)) return { ...p, Status: status || 'deleted' };
+        if (String(p.Id) === String(priceId) || String(p.PriceId) === String(priceId)) return { ...p, Status: status || 'deleted' };
         return p;
       });
 
@@ -929,7 +926,7 @@ async function startServer() {
   app.get('/api/quotes/:id', (req, res) => {
     try {
       const db = loadDb();
-      const quote = db.product_prices.find((p: any) => p.PriceId === req.params.id);
+      const quote = db.product_prices.find((p: any) => p.Id === req.params.id || p.PriceId === req.params.id);
       if (quote) {
         res.json(quote);
       } else {
@@ -1032,20 +1029,20 @@ async function startServer() {
 
       let foundId = id;
       if (type === 'part') {
-        const category = db.products_info.find((p: any) => p.PartID === id || p.PartName === id);
+        const category = db.part_name.find((p: any) => p.Id === id || p.PartID === id || p.PartName === id);
         if (!category) return res.status(404).json({ error: 'یافت نشد' });
 
-        foundId = category.PartID;
+        foundId = category.Id;
         category.view_count = (category.view_count || 0) + 1;
         category.views_1month = (category.views_1month || 0) + 1;
         category.views_3months = (category.views_3months || 0) + 1;
         category.views_6months = (category.views_6months || 0) + 1;
         category.views_1year = (category.views_1year || 0) + 1;
       } else if (type === 'product') {
-        const prod = db.products_db_list.find((p: any) => p.ProductID === id || p.ProductName === id);
+        const prod = db.product_name.find((p: any) => p.Id === id || p.ProductID === id || p.ProductName === id);
         if (!prod) return res.status(404).json({ error: 'یافت نشد' });
 
-        foundId = prod.ProductID;
+        foundId = prod.Id;
         prod.view_count = (prod.view_count || 0) + 1;
         prod.views_1month = (prod.views_1month || 0) + 1;
         prod.views_3months = (prod.views_3months || 0) + 1;
@@ -1082,7 +1079,7 @@ async function startServer() {
       else if (range === 'all') sortField = 'view_count';
 
       const db = loadDb();
-      let source = type === 'part' ? [...db.products_info] : [...db.products_db_list];
+      let source = type === 'part' ? [...db.part_name] : [...db.product_name];
 
       source.sort((a: any, b: any) => {
         const valA = a[sortField] || 0;
@@ -1124,10 +1121,10 @@ async function startServer() {
     // 31 days process
     db.daily_views.filter((v: any) => v.date === d31).forEach((r: any) => {
       if (r.target_id === 'part') {
-        const cat = db.products_info.find((c: any) => c.PartID === r.item_id);
+        const cat = db.part_name.find((c: any) => c.Id === r.item_id || c.PartID === r.item_id);
         if (cat) cat.views_1month = Math.max(0, (cat.views_1month || 0) - r.count);
       } else {
-        const prod = db.products_db_list.find((p: any) => p.ProductID === r.item_id);
+        const prod = db.product_name.find((p: any) => p.Id === r.item_id || p.ProductID === r.item_id);
         if (prod) prod.views_1month = Math.max(0, (prod.views_1month || 0) - r.count);
       }
     });
@@ -1135,10 +1132,10 @@ async function startServer() {
     // 91 days process
     db.daily_views.filter((v: any) => v.date === d91).forEach((r: any) => {
       if (r.target_id === 'part') {
-        const cat = db.products_info.find((c: any) => c.PartID === r.item_id);
+        const cat = db.part_name.find((c: any) => c.Id === r.item_id || c.PartID === r.item_id);
         if (cat) cat.views_3months = Math.max(0, (cat.views_3months || 0) - r.count);
       } else {
-        const prod = db.products_db_list.find((p: any) => p.ProductID === r.item_id);
+        const prod = db.product_name.find((p: any) => p.Id === r.item_id || p.ProductID === r.item_id);
         if (prod) prod.views_3months = Math.max(0, (prod.views_3months || 0) - r.count);
       }
     });

@@ -1,0 +1,164 @@
+{
+  "part_name": [
+    {
+      "PartName": "پمپ هیدرولیک",
+      "OtherNames": "Hydraulic Pump, پمپ اصلی",
+      "Id": "CAT-001",
+      "PartCollection": "کوماتسو",
+      "view_count": 122,
+      "views_1month": 42,
+      "views_3months": 82,
+      "views_6months": 102,
+      "views_1year": 122
+    },
+    {
+      "PartName": "موتور دیزل",
+      "OtherNames": "Engine, موتور اصلی",
+      "Id": "CAT-002",
+      "PartCollection": "کلو",
+      "view_count": 95,
+      "views_1month": 30,
+      "views_3months": 60,
+      "views_6months": 80,
+      "views_1year": 95
+    },
+    {
+      "PartName": "جک هیدرولیک",
+      "OtherNames": "Cylinder, جک بالابر",
+      "Id": "CAT-003",
+      "PartCollection": "کلمنس",
+      "view_count": 75,
+      "views_1month": 25,
+      "views_3months": 50,
+      "views_6months": 65,
+      "views_1year": 75
+    }
+  ],
+  "product_name": [
+    {
+      "PartName": "پمپ هیدرولیک",
+      "OtherNames": "Hydraulic Pump, پمپ اصلی",
+      "PartID": "CAT-001",
+      "TargetName": "پمپ هیدرولیک",
+      "TargetModel": "PC220-7",
+      "ProductName": "پمپ هیدرولیک PC220-7",
+      "PartNumber": "708-2L-00300",
+      "ProductInformation": "پمپ هیدرولیک اصلی کوماتسو سری ۷",
+      "Id": "PD123456",
+      "SRTID": "SRT-101",
+      "Status": "New",
+      "view_count": 85,
+      "views_1month": 30,
+      "views_3months": 60,
+      "views_6months": 75,
+      "views_1year": 85
+    }
+  ],
+  "product_prices": [
+    {
+      "PartName": "پمپ هیدرولیک",
+      "OtherNames": "Hydraulic Pump, پمپ اصلی",
+      "PartID": "CAT-001",
+      "TargetName": "پمپ هیدرولیک",
+      "TargetModel": "PC220-7",
+      "ProductName": "پمپ هیدرولیک PC220-7",
+      "PartNumber": "708-2L-00300",
+      "ProductInformation": "پمپ هیدرولیک اصلی کوماتسو سری ۷",
+      "ProductID": "PD123456",
+      "SRTID": "SRT-101",
+      "Status": "New",
+      "LastPriceUpdateDate": "۱۴۰۳/۰۲/۲۸",
+      "Price": "120000000",
+      "Id": "PR99901",
+      "SupplierName": "فروشگاه مرکزی دنا",
+      "From": "Admin",
+      "DailyDollarRate": "64,200",
+      "PriceValidityDays": 7,
+      "SRTPriceID": "SRTPR-101",
+      "CRMID": "CRM-202",
+      "ShelfNumber": "A-5"
+    }
+  ],
+  "roles": [
+    {
+      "name": "admin",
+      "permissions": [
+        "manage_categories",
+        "manage_parts",
+        "manage_quotes",
+        "manage_users"
+      ]
+    },
+    {
+      "name": "operator",
+      "permissions": [
+        "manage_parts",
+        "manage_quotes"
+      ]
+    },
+    {
+      "name": "viewer",
+      "permissions": []
+    }
+  ],
+  "users": [
+    {
+      "username": "admin",
+      "password": "Admin",
+      "role": "admin",
+      "userID": "usr-admin",
+      "email": "admin@sanginprice.ir",
+      "phone": "09121111111"
+    },
+    {
+      "username": "operator",
+      "password": "Password123",
+      "role": "operator",
+      "userID": "usr-operator",
+      "email": "operator@sanginprice.ir",
+      "phone": "09122222222"
+    },
+    {
+      "username": "viewer",
+      "password": "Password123",
+      "role": "viewer",
+      "userID": "usr-viewer",
+      "email": "viewer@sanginprice.ir",
+      "phone": "09123333333"
+    }
+  ],
+  "contacts": [
+    {
+      "_id": "c-1",
+      "fullName": "امیرحسین رضایی",
+      "specialty": "متخصص تراش سرسیلندر و قطعات سنگین هیدرولیک",
+      "landline": "021-55428990",
+      "phone1": "09121234567",
+      "phone2": "09351234567",
+      "address": "تهران، خیابان قزوین، گاراژ بزرگ تراشکاران، پلاک ۴",
+      "notes": "دارای بیش از ۱۵ سال سابقه در تراش سیلندرهای جک‌های هیدرولیکی لیفتراک و بیل مکانیکی کوماتسو"
+    },
+    {
+      "_id": "c-2",
+      "fullName": "علیرضا سلیمی",
+      "specialty": "تامین‌کننده کاسه‌نمد و جک‌های هیدرولیک پنوماتیک",
+      "landline": "021-33948822",
+      "phone1": "09129876543",
+      "phone2": "",
+      "address": "تهران، لاله زار جنوبی، پاساژ صدرا، طبقه همکف، پلاک ۱۸",
+      "notes": "نمایندگی رسمی برندهای مطرح ایتالیایی و آلمانی کاسه نمد و پکینگ جک‌های راهسازی"
+    },
+    {
+      "_id": "c-3",
+      "fullName": "حسین حسینی",
+      "specialty": "بازسازی و تعویض روتور و شفت هیدرولیک سنگین",
+      "landline": "021-66315544",
+      "phone1": "09123456780",
+      "phone2": "09191234567",
+      "address": "اصفهان، شهرک صنعتی امیرکبیر، خیابان شاپور جدید، کارگاه حسینی",
+      "notes": "آبکاری کروم سخت شفت تا طول ۴ متر بابت سیلندرهای هیدرولیک طویل کوره و سیمان"
+    }
+  ],
+  "audit_logs": [],
+  "daily_views": []
+}
