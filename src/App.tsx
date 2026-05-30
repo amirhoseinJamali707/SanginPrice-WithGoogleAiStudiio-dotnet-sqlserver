@@ -928,19 +928,19 @@ const UserProfileModal = ({
           
           <div className="mt-2 inline-flex items-center gap-1 px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-xs font-bold border border-amber-100">
             <span>سطح دسترسی:</span>
-            <span>{userRole === 'admin' ? 'مدیر سیستم (Admin)' : userRole === 'operator' ? 'اپراتور (Operator)' : 'مشاهده‌کننده (Viewer)'}</span>
+            <span>{userRole?.toLowerCase() === 'admin' ? 'مدیر سیستم (Admin)' : userRole?.toLowerCase() === 'operator' ? 'اپراتور (Operator)' : 'مشاهده‌کننده (Viewer)'}</span>
           </div>
 
           <div className="mt-6 border-t border-slate-100 pt-4 text-right">
             <h4 className="text-xs font-bold text-slate-400 block mb-2 mr-1">دسترسی‌های فعال شما:</h4>
             <div className="space-y-1.5">
-              {userRole === 'admin' && (
+              {userRole?.toLowerCase() === 'admin' && (
                 <div className="text-xs text-slate-600 flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                   <span>دسترسی کامل به تمامی بخش‌های مدیریتی</span>
                 </div>
               )}
-              {userRole === 'operator' && (
+              {userRole?.toLowerCase() === 'operator' && (
                 <>
                   <div className="text-xs text-slate-600 flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
@@ -952,7 +952,7 @@ const UserProfileModal = ({
                   </div>
                 </>
               )}
-              {userRole === 'viewer' && (
+              {userRole?.toLowerCase() === 'viewer' && (
                 <div className="text-xs text-slate-600 flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-slate-450" />
                   <span>صرفاً مجاز به بررسی و مشاهده استعلام نسبت‌ها</span>
@@ -1250,13 +1250,13 @@ const UserAdminModal = ({
 
                       <div className="flex items-center gap-4">
                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                          u.role === 'admin' 
+                          u.role?.toLowerCase() === 'admin' 
                             ? 'bg-amber-100 text-amber-700 border border-amber-200' 
-                            : u.role === 'operator' 
+                            : u.role?.toLowerCase() === 'operator' 
                             ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' 
                             : 'bg-slate-100 text-slate-500 border border-slate-200'
                         }`}>
-                          {u.role === 'admin' ? 'Admin' : u.role === 'operator' ? 'Operator' : 'Viewer'}
+                          {u.role?.toLowerCase() === 'admin' ? 'Admin' : u.role?.toLowerCase() === 'operator' ? 'Operator' : 'Viewer'}
                         </span>
 
                         <button
@@ -1418,7 +1418,7 @@ const Layout = ({
                           <span>پنل کاربری (پروفایل)</span>
                         </button>
 
-                        {userRole === 'admin' && (
+                        {userRole?.toLowerCase() === 'admin' && (
                           <button
                             onClick={() => {
                               setIsMenuOpen(false);
@@ -3833,7 +3833,7 @@ const PriceQuoteListPage = ({ dollarRate, userName }: { dollarRate: string, user
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem('admin_token'));
   const [userName, setUserName] = useState(() => localStorage.getItem('user_name') || 'Admin');
-  const [userRole, setUserRole] = useState(() => localStorage.getItem('user_role') || 'admin');
+  const [userRole, setUserRole] = useState(() => (localStorage.getItem('user_role') || 'admin').toLowerCase());
   const [userPermissions, setUserPermissions] = useState<string[]>(() => {
     try {
       return JSON.parse(localStorage.getItem('user_permissions') || '[]');
@@ -3884,13 +3884,14 @@ export default function App() {
   }, []);
 
   const handleLogin = (token: string, username: string, role: string, permissions: string[]) => {
+    const normalizedRole = (role || 'admin').toLowerCase();
     localStorage.setItem('admin_token', token);
     localStorage.setItem('user_name', username);
-    localStorage.setItem('user_role', role);
+    localStorage.setItem('user_role', normalizedRole);
     localStorage.setItem('user_permissions', JSON.stringify(permissions));
 
     setUserName(username);
-    setUserRole(role);
+    setUserRole(normalizedRole);
     setUserPermissions(permissions);
     setIsLoggedIn(true);
   };
@@ -3908,7 +3909,7 @@ export default function App() {
   };
 
   const hasPermission = (perm: string) => {
-    if (userRole === 'admin') return true;
+    if (userRole?.toLowerCase() === 'admin') return true;
     return userPermissions.includes(perm);
   };
 
