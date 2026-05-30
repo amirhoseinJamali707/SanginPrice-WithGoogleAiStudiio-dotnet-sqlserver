@@ -7,7 +7,7 @@ public class ProductPriceDto
     public int PartID { get; set; }
     public string? TargetName { get; set; }
     public string? TargetModel { get; set; }
-    public string ProductName { get; set; } = string.Empty;
+    public string? ProductName { get; set; }
     public string? PartNumber { get; set; }
     public string? ProductInformation { get; set; }
     public int PriceId { get; set; }
@@ -16,9 +16,9 @@ public class ProductPriceDto
     public string? From { get; set; }
     public string? SupplierName { get; set; }
     public string? LastPriceUpdateDate { get; set; }
-    public string Price { get; set; } = string.Empty;
+    public string? Price { get; set; }
     public string? Material { get; set; }
-    public string DailyDollarRate { get; set; } = string.Empty;
+    public string? DailyDollarRate { get; set; }
     public int PriceValidityDays { get; set; } = 7;
     public string? EstimatedPrice { get; set; }
     public string? Status { get; set; }

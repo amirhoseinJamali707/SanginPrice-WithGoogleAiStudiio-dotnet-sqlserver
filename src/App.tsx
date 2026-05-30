@@ -158,6 +158,8 @@ const mapToPascalCase = (obj: any): any => {
     result.partID = result.PartID;
     if (!result.hasOwnProperty('Id')) {
       result.Id = result.PartID;
+      result.id = result.PartID;
+      result.ID = result.PartID;
     }
   }
   if (result.hasOwnProperty('Id') && !result.hasOwnProperty('PartID')) {
@@ -168,9 +170,9 @@ const mapToPascalCase = (obj: any): any => {
   if (result.hasOwnProperty('ProductID')) {
     result.productId = result.ProductID;
     result.productID = result.ProductID;
-    if (!result.hasOwnProperty('id')) {
-      result.id = result.ProductID;
-    }
+    result.Id = result.ProductID;
+    result.id = result.ProductID;
+    result.ID = result.ProductID;
   }
   if (result.hasOwnProperty('Id') && !result.hasOwnProperty('ProductID')) {
     // If we have an Id and no ProductID (like for MachinePart item), map it too
@@ -185,6 +187,9 @@ const mapToPascalCase = (obj: any): any => {
   if (result.hasOwnProperty('PriceId')) {
     result.priceId = result.PriceId;
     result.priceID = result.PriceId;
+    result.Id = result.PriceId;
+    result.id = result.PriceId;
+    result.ID = result.PriceId;
   }
   if (result.hasOwnProperty('SRTPriceID')) {
     result.srtPriceId = result.SRTPriceID;

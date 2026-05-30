@@ -73,7 +73,7 @@ public class MachinePartService : IMachinePartService
         if (matchingCat == null) return null;
 
         var duplicate = await _context.MachineParts
-            .AnyAsync(m => m.ProductName.ToLower() == dto.ProductName.Trim().ToLower());
+            .AnyAsync(m => m.ProductName.ToLower() == dto.ProductName!.Trim().ToLower());
         if (duplicate) return null;
 
         var part = new MachinePart
@@ -81,7 +81,7 @@ public class MachinePartService : IMachinePartService
             PartID = dto.PartID,
             TargetName = dto.TargetName,
             TargetModel = dto.TargetModel,
-            ProductName = dto.ProductName.Trim(),
+            ProductName = dto.ProductName!.Trim(),
             PartNumber = dto.PartNumber,
             ProductInformation = dto.ProductInformation,
             SrtID = dto.SRTID,
@@ -102,17 +102,18 @@ public class MachinePartService : IMachinePartService
         var part = await _context.MachineParts.FirstOrDefaultAsync(p => p.Id == productId);
         if (part == null) return null;
 
-        var matchingCat = await _context.ProductCategories.FirstOrDefaultAsync(c => c.Id == dto.PartID);
+        var categoryId = dto.PartID > 0 ? dto.PartID : part.PartID;
+        var matchingCat = await _context.ProductCategories.FirstOrDefaultAsync(c => c.Id == categoryId);
         if (matchingCat == null) return null;
 
-        part.PartID = dto.PartID;
+        part.PartID = categoryId;
         part.TargetName = dto.TargetName;
         part.TargetModel = dto.TargetModel;
-        part.ProductName = dto.ProductName;
+        part.ProductName = dto.ProductName ?? part.ProductName;
         part.PartNumber = dto.PartNumber;
         part.ProductInformation = dto.ProductInformation;
         part.SrtID = dto.SRTID;
-        part.ProductStatus = dto.Status;
+        part.ProductStatus = dto.Status ?? part.ProductStatus;
 
         await _context.SaveChangesAsync();
 

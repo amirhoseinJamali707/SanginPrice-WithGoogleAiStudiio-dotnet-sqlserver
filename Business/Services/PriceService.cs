@@ -86,7 +86,7 @@ public class PriceService : IPriceService
             ProductID = product.Id,
             PriceStatus = "active",
             LastPriceUpdateDate = GetPersianDateNow(),
-            Price = dto.Price.Replace(",", ""),
+            Price = dto.Price!.Replace(",", ""),
             DailyDollarRate = dto.DailyDollarRate?.Replace(",", "") ?? "0",
             PriceValidityDays = dto.PriceValidityDays,
             EstimatedPrice = dto.EstimatedPrice,
@@ -129,7 +129,10 @@ public class PriceService : IPriceService
 
         price.SupplierName = dto.SupplierName?.Trim();
         price.LastPriceUpdateDate = GetPersianDateNow();
-        price.Price = dto.Price.Replace(",", "");
+        if (!string.IsNullOrWhiteSpace(dto.Price))
+        {
+            price.Price = dto.Price.Replace(",", "");
+        }
         price.DailyDollarRate = dto.DailyDollarRate?.Replace(",", "") ?? "0";
         price.PriceValidityDays = dto.PriceValidityDays;
         price.EstimatedPrice = dto.EstimatedPrice;

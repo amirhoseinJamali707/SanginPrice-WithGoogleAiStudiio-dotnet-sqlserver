@@ -56,6 +56,7 @@ public class PricesController : ControllerBase
     }
 
     [HttpPut("{priceId}")]
+    [HttpPatch("{priceId}")]
     public async Task<IActionResult> UpdatePrice(int priceId, [FromBody] ProductPriceDto dto, [FromHeader] string? username)
     {
         var activeUser = username ?? "Admin";

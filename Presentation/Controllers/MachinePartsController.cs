@@ -54,6 +54,7 @@ public class MachinePartsController : ControllerBase
     }
 
     [HttpPut("{productId}")]
+    [HttpPatch("{productId}")]
     public async Task<IActionResult> Update(int productId, [FromBody] MachinePartDto dto)
     {
         var result = await _machService.UpdatePartAsync(productId, dto);
