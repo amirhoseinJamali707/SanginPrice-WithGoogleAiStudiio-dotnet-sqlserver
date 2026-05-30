@@ -25,6 +25,9 @@ public class ProductPrice
     [MaxLength(255)]
     public string? SupplierName { get; set; }
 
+    [MaxLength(255)]
+    public string? Material { get; set; }
+
     [MaxLength(100)]
     public string? PriceRecorder { get; set; }
 

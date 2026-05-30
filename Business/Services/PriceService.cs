@@ -91,6 +91,7 @@ public class PriceService : IPriceService
             PriceValidityDays = dto.PriceValidityDays,
             EstimatedPrice = dto.EstimatedPrice,
             SupplierName = dto.SupplierName?.Trim(),
+            Material = dto.Material?.Trim(),
             PriceRecorder = username,
             SRTPriceID = dto.SRTPriceID?.Trim(),
             CRMID = dto.CRMID?.Trim(),
@@ -128,6 +129,7 @@ public class PriceService : IPriceService
         var oldPrice = price.Price;
 
         price.SupplierName = dto.SupplierName?.Trim();
+        price.Material = dto.Material?.Trim();
         price.LastPriceUpdateDate = GetPersianDateNow();
         if (!string.IsNullOrWhiteSpace(dto.Price))
         {
@@ -287,6 +289,7 @@ public class PriceService : IPriceService
             LastPriceUpdateDate = p.LastPriceUpdateDate,
             Price = p.Price,
             DailyDollarRate = p.DailyDollarRate,
+            Material = p.Material,
             PriceValidityDays = p.PriceValidityDays,
             EstimatedPrice = p.EstimatedPrice,
             Status = p.PriceStatus,

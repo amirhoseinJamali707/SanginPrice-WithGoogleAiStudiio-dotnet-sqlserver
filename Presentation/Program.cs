@@ -161,6 +161,25 @@ using (var scope = app.Services.CreateScope())
                 // This exception occurs if tables already exist, which is expected and completely fine.
             }
         }
+
+        try
+        {
+            context.Database.ExecuteSqlRaw(@"
+                IF NOT EXISTS (
+                    SELECT * FROM sys.columns 
+                    WHERE object_id = OBJECT_ID(N'[dbo].[product_prices]') 
+                    AND name = 'Material'
+                )
+                BEGIN
+                    ALTER TABLE [dbo].[product_prices] ADD [Material] NVARCHAR(255) NULL;
+                END
+            ");
+            Console.WriteLine("Ensured 'Material' column exists in 'product_prices' table.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error or warning ensuring Material column exists: {ex.Message}");
+        }
     }
     catch (Exception ex)
     {
