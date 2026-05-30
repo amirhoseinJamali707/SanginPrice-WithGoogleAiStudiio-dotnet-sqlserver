@@ -124,19 +124,20 @@ const mapToPascalCase = (obj: any): any => {
   for (const key of Object.keys(obj)) {
     let pascalKey = key;
     if (key.length > 0) {
-      if (key === 'id') {
+      const lowerKey = key.toLowerCase();
+      if (lowerKey === 'id') {
         pascalKey = 'Id';
-      } else if (key === 'partID' || key === 'partId') {
+      } else if (lowerKey === 'partid') {
         pascalKey = 'PartID';
-      } else if (key === 'productID' || key === 'productId') {
+      } else if (lowerKey === 'productid') {
         pascalKey = 'ProductID';
-      } else if (key === 'priceID' || key === 'priceId') {
+      } else if (lowerKey === 'priceid') {
         pascalKey = 'PriceId';
-      } else if (key === 'srtID' || key === 'srtId') {
+      } else if (lowerKey === 'srtid') {
         pascalKey = 'SRTID';
-      } else if (key === 'srtPriceID' || key === 'srtPriceId') {
+      } else if (lowerKey === 'srtpriceid') {
         pascalKey = 'SRTPriceID';
-      } else if (key === 'crmID' || key === 'crmId') {
+      } else if (lowerKey === 'crmid') {
         pascalKey = 'CRMID';
       } else {
         pascalKey = key.charAt(0).toUpperCase() + key.slice(1);
@@ -193,9 +194,15 @@ const mapToPascalCase = (obj: any): any => {
   }
   if (result.hasOwnProperty('SRTPriceID')) {
     result.srtPriceId = result.SRTPriceID;
+    result.srtPriceID = result.SRTPriceID;
   }
   if (result.hasOwnProperty('CRMID')) {
     result.crmId = result.CRMID;
+    result.crmID = result.CRMID;
+  }
+  if (result.hasOwnProperty('SRTID')) {
+    result.srtId = result.SRTID;
+    result.srtID = result.SRTID;
   }
 
   return result;
@@ -3482,6 +3489,27 @@ const QuoteDetailModal = ({
               <span className="text-xs font-bold text-slate-400">شناسه محصول</span>
               <span className="font-mono text-slate-500 text-xs font-semibold">{q.ProductID || 'PD---'}</span>
             </div>
+
+            {q.CRMID && (
+              <div className="flex justify-between items-center border-b border-slate-200/30 pb-2.5">
+                <span className="text-xs font-bold text-slate-400">آیدی CRM</span>
+                <span className="font-mono text-indigo-600 text-xs font-bold">{q.CRMID}</span>
+              </div>
+            )}
+
+            {q.SRTPriceID && (
+              <div className="flex justify-between items-center border-b border-slate-200/30 pb-2.5">
+                <span className="text-xs font-bold text-slate-400">شناسه قیمت سایت</span>
+                <span className="font-mono text-sky-600 text-xs font-bold">{q.SRTPriceID}</span>
+              </div>
+            )}
+
+            {q.ShelfNumber && (
+              <div className="flex justify-between items-center border-b border-slate-200/30 pb-2.5">
+                <span className="text-xs font-bold text-slate-400">شماره قفسه</span>
+                <span className="font-mono text-amber-600 text-xs font-bold">{q.ShelfNumber}</span>
+              </div>
+            )}
 
             <div className="flex justify-between items-center">
               <span className="text-xs font-bold text-slate-400">شناسه قیمت</span>

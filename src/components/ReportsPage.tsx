@@ -74,19 +74,20 @@ const mapToPascalCase = (obj: any): any => {
   for (const key of Object.keys(obj)) {
     let pascalKey = key;
     if (key.length > 0) {
-      if (key === 'id') {
+      const lowerKey = key.toLowerCase();
+      if (lowerKey === 'id') {
         pascalKey = 'Id';
-      } else if (key === 'partID' || key === 'partId') {
+      } else if (lowerKey === 'partid') {
         pascalKey = 'PartID';
-      } else if (key === 'productID' || key === 'productId') {
+      } else if (lowerKey === 'productid') {
         pascalKey = 'ProductID';
-      } else if (key === 'priceID' || key === 'priceId') {
+      } else if (lowerKey === 'priceid') {
         pascalKey = 'PriceId';
-      } else if (key === 'srtID' || key === 'srtId') {
+      } else if (lowerKey === 'srtid') {
         pascalKey = 'SRTID';
-      } else if (key === 'srtPriceID' || key === 'srtPriceId') {
+      } else if (lowerKey === 'srtpriceid') {
         pascalKey = 'SRTPriceID';
-      } else if (key === 'crmID' || key === 'crmId') {
+      } else if (lowerKey === 'crmid') {
         pascalKey = 'CRMID';
       } else {
         pascalKey = key.charAt(0).toUpperCase() + key.slice(1);
@@ -97,6 +98,21 @@ const mapToPascalCase = (obj: any): any => {
       result[key] = result[pascalKey];
     }
   }
+
+  // Cross-mappings
+  if (result.hasOwnProperty('CRMID')) {
+    result.crmId = result.CRMID;
+    result.crmID = result.CRMID;
+  }
+  if (result.hasOwnProperty('SRTID')) {
+    result.srtId = result.SRTID;
+    result.srtID = result.SRTID;
+  }
+  if (result.hasOwnProperty('Id')) {
+    result.id = result.Id;
+    result.ID = result.Id;
+  }
+
   return result;
 };
 
