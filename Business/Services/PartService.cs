@@ -110,12 +110,18 @@ public class PartService : IPartService
     public async Task<BulkPartResponseDto> BulkUploadCategoriesAsync(List<ProductCategoryDto> items)
     {
         var response = new BulkPartResponseDto();
+        Console.WriteLine($"[DIAG_CATEGORY_UPLOAD] BulkUploadCategoriesAsync is triggered with {items?.Count ?? 0} category items.");
 
+        int index = 0;
         foreach (var item in items)
         {
+            index++;
             var partName = item.PartName?.Trim() ?? "";
+            Console.WriteLine($"[DIAG_CATEGORY_UPLOAD] [{index}/{items.Count}] Processing PartName: '{partName}'");
+
             if (string.IsNullOrEmpty(partName))
             {
+                Console.WriteLine($"[DIAG_CATEGORY_UPLOAD] [{index}/{items.Count}] Error: PartName is null or empty.");
                 response.FailedList.Add(new PartFailedItemDto
                 {
                     PartName = "",
@@ -126,8 +132,10 @@ public class PartService : IPartService
                 continue;
             }
 
+            Console.WriteLine($"[DIAG_CATEGORY_UPLOAD] [{index}/{items.Count}] Querying SQL Server to check if category '{partName}' already exists.");
             var duplicate = await _context.ProductCategories
-                .AnyAsync(c => c.PartName.ToLower() == partName.ToLower());
+                .AnyAsync(c => !string.IsNullOrEmpty(c.PartName) && c.PartName.ToLower() == partName.ToLower());
+            Console.WriteLine($"[DIAG_CATEGORY_UPLOAD] [{index}/{items.Count}] Duplicate-check query done. Exists = {duplicate}");
 
             if (duplicate)
             {
@@ -161,8 +169,12 @@ public class PartService : IPartService
                     PartCollection = item.PartCollection?.Trim()
                 };
 
+                Console.WriteLine($"[DIAG_CATEGORY_UPLOAD] [{index}/{items.Count}] Adding category entity to DbContext...");
                 _context.ProductCategories.Add(cat);
+                
+                Console.WriteLine($"[DIAG_CATEGORY_UPLOAD] [{index}/{items.Count}] Calling SaveChangesAsync() to commit to the database...");
                 await _context.SaveChangesAsync();
+                Console.WriteLine($"[DIAG_CATEGORY_UPLOAD] [{index}/{items.Count}] SaveChangesAsync completed successfully. New ID: {cat.Id}");
 
                 var savedDto = new ProductCategoryDto
                 {
@@ -177,6 +189,7 @@ public class PartService : IPartService
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[DIAG_CATEGORY_UPLOAD] [{index}/{items.Count}] Database saving failed! Exception: {ex.Message}\n{ex.StackTrace}");
                 response.FailedList.Add(new PartFailedItemDto
                 {
                     PartName = partName,

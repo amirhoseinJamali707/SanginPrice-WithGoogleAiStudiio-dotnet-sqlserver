@@ -140,62 +140,100 @@ public class MachinePartService : IMachinePartService
     public async Task<BulkPartUploadResultDto> BulkUploadPartsAsync(List<MachinePartDto> items, bool isMethod2)
     {
         var result = new BulkPartUploadResultDto();
+        Console.WriteLine($"[DIAG_PART_UPLOAD] BulkUploadPartsAsync triggered. Items: {items?.Count ?? 0}, isMethod2: {isMethod2}");
 
-        var categories = await _context.ProductCategories.ToListAsync();
+        List<ProductCategory> categories;
+        try
+        {
+            Console.WriteLine("[DIAG_PART_UPLOAD] Loading product categories from SQL Server...");
+            categories = await _context.ProductCategories.ToListAsync();
+            Console.WriteLine($"[DIAG_PART_UPLOAD] Successfully loaded {categories?.Count ?? 0} categories from database.");
+        }
+        catch (Exception dbEx)
+        {
+            Console.WriteLine($"[DIAG_PART_UPLOAD] Critical error fetching categories: {dbEx.Message}\n{dbEx.StackTrace}");
+            throw;
+        }
 
+        int index = 0;
         foreach (var item in items)
         {
-            string targetName = item.TargetName?.Trim() ?? "";
-            string targetModel = item.TargetModel?.Trim() ?? "";
-            string productName = item.ProductName?.Trim() ?? "";
-
-            if (isMethod2)
-            {
-                if (string.IsNullOrEmpty(item.ProductName))
-                {
-                    result.Failed.Add(new MachinePartFailedItemDto { Error = "نام کالا (ProductName) الزامی است" });
-                    continue;
-                }
-
-                var extracted = ExtractMachinery(item.ProductName);
-                if (extracted == null)
-                {
-                    result.Failed.Add(new MachinePartFailedItemDto { ProductName = item.ProductName, Error = "مشخصه ماشین‌آلات در نام کالا یافت نشد" });
-                    continue;
-                }
-
-                targetName = extracted.Item1;
-                targetModel = extracted.Item2;
-                productName = item.ProductName;
-            }
-
-            if (string.IsNullOrEmpty(productName))
-            {
-                result.Failed.Add(new MachinePartFailedItemDto { Error = "نام کالا الزامی است" });
-                continue;
-            }
-
-            var matchingCat = categories.FirstOrDefault(c => c.PartName.ToLower() == targetName.ToLower());
-            if (matchingCat == null)
-            {
-                var newCat = new ProductCategory { PartName = targetName };
-                _context.ProductCategories.Add(newCat);
-                await _context.SaveChangesAsync();
-                
-                categories.Add(newCat);
-                matchingCat = newCat;
-            }
-
-            var duplicate = await _context.MachineParts.AnyAsync(m => m.ProductName.ToLower() == productName.ToLower());
-
-            if (duplicate)
-            {
-                result.Failed.Add(new MachinePartFailedItemDto { ProductName = productName, Error = "کالای تکراری است" });
-                continue;
-            }
-
+            index++;
+            Console.WriteLine($"[DIAG_PART_UPLOAD] [{index}/{items.Count}] Processing Item: TargetName='{item.TargetName}', TargetModel='{item.TargetModel}', ProductName='{item.ProductName}', PartNumber='{item.PartNumber}'");
             try
             {
+                string targetName = item.TargetName?.Trim() ?? "";
+                string targetModel = item.TargetModel?.Trim() ?? "";
+                string productName = item.ProductName?.Trim() ?? "";
+
+                if (isMethod2)
+                {
+                    if (string.IsNullOrEmpty(item.ProductName))
+                    {
+                        Console.WriteLine($"[DIAG_PART_UPLOAD] [{index}/{items.Count}] Error: Method 2 chosen but ProductName is empty.");
+                        result.Failed.Add(new MachinePartFailedItemDto { Error = "نام کالا (ProductName) الزامی است" });
+                        continue;
+                    }
+
+                    var extracted = ExtractMachinery(item.ProductName);
+                    if (extracted == null)
+                    {
+                        Console.WriteLine($"[DIAG_PART_UPLOAD] [{index}/{items.Count}] Error: Failed to extract machinery model details from '{item.ProductName}'.");
+                        result.Failed.Add(new MachinePartFailedItemDto { ProductName = item.ProductName, Error = "مشخصه ماشین‌آلات در نام کالا یافت نشد" });
+                        continue;
+                    }
+
+                    targetName = extracted.Item1;
+                    targetModel = extracted.Item2;
+                    productName = item.ProductName;
+                    Console.WriteLine($"[DIAG_PART_UPLOAD] [{index}/{items.Count}] Extraction success -> TargetName='{targetName}', TargetModel='{targetModel}'");
+                }
+                else
+                {
+                    if (string.IsNullOrEmpty(productName))
+                    {
+                        productName = (targetName + " " + targetModel).Trim();
+                    }
+                }
+
+                if (string.IsNullOrEmpty(productName))
+                {
+                    Console.WriteLine($"[DIAG_PART_UPLOAD] [{index}/{items.Count}] Error: ProductName ended up empty.");
+                    result.Failed.Add(new MachinePartFailedItemDto { Error = "نام کالا الزامی است" });
+                    continue;
+                }
+
+                Console.WriteLine($"[DIAG_PART_UPLOAD] [{index}/{items.Count}] Looking for matching category with PartName: '{targetName}'");
+                var matchingCat = categories.FirstOrDefault(c => !string.IsNullOrEmpty(c.PartName) && c.PartName.ToLower() == targetName.ToLower());
+                
+                if (matchingCat == null)
+                {
+                    Console.WriteLine($"[DIAG_PART_UPLOAD] [{index}/{items.Count}] Category not found. Auto-creating a new ProductCategory with PartName: '{targetName}'");
+                    var newCat = new ProductCategory { PartName = targetName };
+                    _context.ProductCategories.Add(newCat);
+                    
+                    Console.WriteLine($"[DIAG_PART_UPLOAD] [{index}/{items.Count}] Saving new ProductCategory to DB...");
+                    await _context.SaveChangesAsync();
+                    Console.WriteLine($"[DIAG_PART_UPLOAD] [{index}/{items.Count}] Saved category successfully. ID: {newCat.Id}");
+                    
+                    categories.Add(newCat);
+                    matchingCat = newCat;
+                }
+                else
+                {
+                    Console.WriteLine($"[DIAG_PART_UPLOAD] [{index}/{items.Count}] Found existing category matching '{targetName}' (ID: {matchingCat.Id})");
+                }
+
+                Console.WriteLine($"[DIAG_PART_UPLOAD] [{index}/{items.Count}] Querying SQL Server to check for duplicate product name: '{productName}'");
+                var duplicate = await _context.MachineParts.AnyAsync(m => !string.IsNullOrEmpty(m.ProductName) && m.ProductName.ToLower() == productName.ToLower());
+                Console.WriteLine($"[DIAG_PART_UPLOAD] [{index}/{items.Count}] Duplicate product check result: {duplicate}");
+
+                if (duplicate)
+                {
+                    result.Failed.Add(new MachinePartFailedItemDto { ProductName = productName, Error = "کالای تکراری است" });
+                    continue;
+                }
+
                 var newPart = new MachinePart
                 {
                     PartID = matchingCat.Id,
@@ -208,8 +246,12 @@ public class MachinePartService : IMachinePartService
                     ProductStatus = string.IsNullOrEmpty(item.Status) ? "New" : item.Status.Trim()
                 };
 
+                Console.WriteLine($"[DIAG_PART_UPLOAD] [{index}/{items.Count}] Adding new MachinePart '{productName}' (PartID: {matchingCat.Id}, SrtID: {newPart.SrtID}) to tracker.");
                 _context.MachineParts.Add(newPart);
+                
+                Console.WriteLine($"[DIAG_PART_UPLOAD] [{index}/{items.Count}] Calling SaveChangesAsync() to save MachinePart...");
                 await _context.SaveChangesAsync();
+                Console.WriteLine($"[DIAG_PART_UPLOAD] [{index}/{items.Count}] Saved successfully. New Part ID: {newPart.Id}");
 
                 result.Inserted.Add(new MachinePartDto
                 {
@@ -229,7 +271,12 @@ public class MachinePartService : IMachinePartService
             }
             catch (Exception ex)
             {
-                result.Failed.Add(new MachinePartFailedItemDto { ProductName = productName, Error = $"خطای دیتابیس: {ex.Message}" });
+                Console.WriteLine($"[DIAG_PART_UPLOAD] [{index}/{items.Count}] Exception caught during processing: {ex.Message}\n{ex.StackTrace}");
+                result.Failed.Add(new MachinePartFailedItemDto 
+                { 
+                    ProductName = item.ProductName ?? item.TargetName, 
+                    Error = $"خطای غیرمنتظره: {ex.Message}" 
+                });
             }
         }
 

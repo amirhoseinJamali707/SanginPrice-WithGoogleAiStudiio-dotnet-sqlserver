@@ -143,47 +143,204 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        // First try standard EnsureCreated
+        
+        // Ensure the database itself exists
         context.Database.EnsureCreated();
 
-        // EF Core EnsureCreated has a limitation: if the database already exists (even if completely empty with 0 tables),
-        // it skips table creation. We use RelationalDatabaseCreator to explicitly force schema construction on existed databases.
-        var databaseCreator = context.Database.GetService<IDatabaseCreator>() as RelationalDatabaseCreator;
-        if (databaseCreator != null && databaseCreator.Exists())
-        {
-            try
-            {
-                databaseCreator.CreateTables();
-                Console.WriteLine("Database tables verified or successfully created.");
-            }
-            catch (Exception)
-            {
-                // This exception occurs if tables already exist, which is expected and completely fine.
-            }
-        }
+        Console.WriteLine("Starting safe idempotent database schema verification...");
 
-        try
-        {
-            context.Database.ExecuteSqlRaw(@"
-                IF NOT EXISTS (
-                    SELECT * FROM sys.columns 
-                    WHERE object_id = OBJECT_ID(N'[dbo].[product_prices]') 
-                    AND name = 'Material'
-                )
+        // 1. Safe creation of Users Table
+        context.Database.ExecuteSqlRaw(@"
+            IF OBJECT_ID(N'[dbo].[Users]', 'U') IS NULL
+            BEGIN
+                CREATE TABLE [dbo].[Users] (
+                    [Id] INT IDENTITY(1,1) NOT NULL,
+                    [Username] NVARCHAR(100) NOT NULL,
+                    [Password] NVARCHAR(255) NOT NULL,
+                    [Role] NVARCHAR(50) NOT NULL,
+                    [UserID] NVARCHAR(100) NOT NULL,
+                    [Email] NVARCHAR(150) NULL DEFAULT '',
+                    [Phone] NVARCHAR(50) NULL DEFAULT '',
+                    CONSTRAINT [PK_Users] PRIMARY KEY CLUSTERED ([Id] ASC)
+                );
+                CREATE UNIQUE NONCLUSTERED INDEX [IX_Users_Username] ON [dbo].[Users] ([Username] ASC);
+            END
+        ");
+
+        // 2. Safe creation of Roles Table
+        context.Database.ExecuteSqlRaw(@"
+            IF OBJECT_ID(N'[dbo].[Roles]', 'U') IS NULL
+            BEGIN
+                CREATE TABLE [dbo].[Roles] (
+                    [Id] INT IDENTITY(1,1) NOT NULL,
+                    [Name] NVARCHAR(255) NOT NULL,
+                    [PermissionsJson] NVARCHAR(MAX) NULL,
+                    CONSTRAINT [PK_Roles] PRIMARY KEY CLUSTERED ([Id] ASC)
+                );
+                CREATE UNIQUE NONCLUSTERED INDEX [IX_Roles_Name] ON [dbo].[Roles] ([Name] ASC);
+            END
+        ");
+
+        // 3. Safe creation of part_name (ProductCategories) Table
+        context.Database.ExecuteSqlRaw(@"
+            IF OBJECT_ID(N'[dbo].[part_name]', 'U') IS NULL
+            BEGIN
+                CREATE TABLE [dbo].[part_name] (
+                    [Id] INT IDENTITY(1,1) NOT NULL,
+                    [PartName] NVARCHAR(255) NOT NULL,
+                    [OtherNames] NVARCHAR(MAX) NULL,
+                    [PartCollection] NVARCHAR(255) NULL,
+                    [ViewCount] INT NOT NULL DEFAULT 0,
+                    [Views1Month] INT NOT NULL DEFAULT 0,
+                    [Views3Months] INT NOT NULL DEFAULT 0,
+                    [Views6Months] INT NOT NULL DEFAULT 0,
+                    [Views1Year] INT NOT NULL DEFAULT 0,
+                    CONSTRAINT [PK_part_name] PRIMARY KEY CLUSTERED ([Id] ASC)
+                );
+                CREATE NONCLUSTERED INDEX [IX_part_name_ViewCount] ON [dbo].[part_name] ([ViewCount] ASC);
+            END
+        ");
+
+        // 4. Safe creation of product_name (MachineParts) Table
+        context.Database.ExecuteSqlRaw(@"
+            IF OBJECT_ID(N'[dbo].[product_name]', 'U') IS NULL
+            BEGIN
+                CREATE TABLE [dbo].[product_name] (
+                    [Id] INT IDENTITY(1,1) NOT NULL,
+                    [PartID] INT NOT NULL,
+                    [TargetName] NVARCHAR(255) NULL,
+                    [TargetModel] NVARCHAR(255) NULL,
+                    [ProductName] NVARCHAR(255) NOT NULL,
+                    [PartNumber] NVARCHAR(100) NULL,
+                    [ProductInformation] NVARCHAR(MAX) NULL,
+                    [SrtID] NVARCHAR(100) NULL,
+                    [ProductStatus] NVARCHAR(50) NOT NULL DEFAULT 'New',
+                    [ViewCount] INT NOT NULL DEFAULT 0,
+                    [Views1Month] INT NOT NULL DEFAULT 0,
+                    [Views3Months] INT NOT NULL DEFAULT 0,
+                    [Views6Months] INT NOT NULL DEFAULT 0,
+                    [Views1Year] INT NOT NULL DEFAULT 0,
+                    CONSTRAINT [PK_product_name] PRIMARY KEY CLUSTERED ([Id] ASC)
+                );
+                CREATE NONCLUSTERED INDEX [IX_product_name_PartID] ON [dbo].[product_name] ([PartID] ASC);
+                CREATE NONCLUSTERED INDEX [IX_product_name_ViewCount] ON [dbo].[product_name] ([ViewCount] ASC);
+            END
+        ");
+
+        // 5. Safe creation of product_prices Table
+        context.Database.ExecuteSqlRaw(@"
+            IF OBJECT_ID(N'[dbo].[product_prices]', 'U') IS NULL
+            BEGIN
+                CREATE TABLE [dbo].[product_prices] (
+                    [Id] INT IDENTITY(1,1) NOT NULL,
+                    [ProductID] INT NOT NULL,
+                    [PriceStatus] NVARCHAR(100) NULL,
+                    [LastPriceUpdateDate] NVARCHAR(100) NULL,
+                    [Price] NVARCHAR(100) NOT NULL,
+                    [SupplierName] NVARCHAR(255) NULL,
+                    [Material] NVARCHAR(255) NULL,
+                    [PriceRecorder] NVARCHAR(100) NULL,
+                    [DailyDollarRate] NVARCHAR(100) NOT NULL,
+                    [PriceValidityDays] INT NOT NULL DEFAULT 7,
+                    [EstimatedPrice] NVARCHAR(MAX) NULL,
+                    [SRTPriceID] NVARCHAR(100) NULL,
+                    [CRMID] NVARCHAR(100) NULL,
+                    [ShelfNumber] NVARCHAR(100) NULL,
+                    CONSTRAINT [PK_product_prices] PRIMARY KEY CLUSTERED ([Id] ASC)
+                );
+                CREATE NONCLUSTERED INDEX [IX_product_prices_ProductID] ON [dbo].[product_prices] ([ProductID] ASC);
+            END
+        ");
+
+        // 6. Safe creation of Contacts Table
+        context.Database.ExecuteSqlRaw(@"
+            IF OBJECT_ID(N'[dbo].[Contacts]', 'U') IS NULL
+            BEGIN
+                CREATE TABLE [dbo].[Contacts] (
+                    [Id] INT IDENTITY(1,1) NOT NULL,
+                    [FullName] NVARCHAR(255) NOT NULL,
+                    [Specialty] NVARCHAR(255) NULL,
+                    [Landline] NVARCHAR(50) NULL,
+                    [Phone1] NVARCHAR(50) NULL,
+                    [Phone2] NVARCHAR(50) NULL,
+                    [Address] NVARCHAR(500) NULL,
+                    [Notes] NVARCHAR(MAX) NULL,
+                    CONSTRAINT [PK_Contacts] PRIMARY KEY CLUSTERED ([Id] ASC)
+                );
+                CREATE NONCLUSTERED INDEX [IX_Contacts_FullName] ON [dbo].[Contacts] ([FullName] ASC);
+            END
+        ");
+
+        // 7. Safe creation of AuditLogs Table
+        context.Database.ExecuteSqlRaw(@"
+            IF OBJECT_ID(N'[dbo].[AuditLogs]', 'U') IS NULL
+            BEGIN
+                CREATE TABLE [dbo].[AuditLogs] (
+                    [Id] INT IDENTITY(1,1) NOT NULL,
+                    [UserId] NVARCHAR(100) NOT NULL,
+                    [ActionType] NVARCHAR(50) NOT NULL,
+                    [TargetId] NVARCHAR(100) NOT NULL,
+                    [TargetType] NVARCHAR(50) NOT NULL,
+                    [Description] NVARCHAR(MAX) NULL,
+                    [ChangesJson] NVARCHAR(MAX) NULL,
+                    [CreatedAt] DATETIME2 NOT NULL,
+                    CONSTRAINT [PK_AuditLogs] PRIMARY KEY CLUSTERED ([Id] ASC)
+                );
+            END
+        ");
+
+        // 8. Safe creation of DailyViews Table
+        context.Database.ExecuteSqlRaw(@"
+            IF OBJECT_ID(N'[dbo].[DailyViews]', 'U') IS NULL
+            BEGIN
+                CREATE TABLE [dbo].[DailyViews] (
+                    [Id] INT IDENTITY(1,1) NOT NULL,
+                    [ItemId] NVARCHAR(100) NOT NULL,
+                    [TargetId] NVARCHAR(100) NULL,
+                    [Date] NVARCHAR(10) NOT NULL,
+                    [Count] INT NOT NULL DEFAULT 0,
+                    CONSTRAINT [PK_DailyViews] PRIMARY KEY CLUSTERED ([Id] ASC)
+                );
+                IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_DailyViews_ItemId_Date' AND object_id = OBJECT_ID('[dbo].[DailyViews]'))
                 BEGIN
-                    ALTER TABLE [dbo].[product_prices] ADD [Material] NVARCHAR(255) NULL;
+                    CREATE UNIQUE NONCLUSTERED INDEX [IX_DailyViews_ItemId_Date] ON [dbo].[DailyViews] ([ItemId], [Date]);
                 END
-            ");
-            Console.WriteLine("Ensured 'Material' column exists in 'product_prices' table.");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error or warning ensuring Material column exists: {ex.Message}");
-        }
+            END
+        ");
+
+        // 9. Safe ensuring of all columns across previously created tables
+        context.Database.ExecuteSqlRaw(@"
+            IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[product_prices]') AND name = 'Material')
+                ALTER TABLE [dbo].[product_prices] ADD [Material] NVARCHAR(255) NULL;
+
+            IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[part_name]') AND name = 'ViewCount')
+                ALTER TABLE [dbo].[part_name] ADD [ViewCount] INT NOT NULL DEFAULT 0;
+            IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[part_name]') AND name = 'Views1Month')
+                ALTER TABLE [dbo].[part_name] ADD [Views1Month] INT NOT NULL DEFAULT 0;
+            IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[part_name]') AND name = 'Views3Months')
+                ALTER TABLE [dbo].[part_name] ADD [Views3Months] INT NOT NULL DEFAULT 0;
+            IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[part_name]') AND name = 'Views6Months')
+                ALTER TABLE [dbo].[part_name] ADD [Views6Months] INT NOT NULL DEFAULT 0;
+            IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[part_name]') AND name = 'Views1Year')
+                ALTER TABLE [dbo].[part_name] ADD [Views1Year] INT NOT NULL DEFAULT 0;
+
+            IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[product_name]') AND name = 'ViewCount')
+                ALTER TABLE [dbo].[product_name] ADD [ViewCount] INT NOT NULL DEFAULT 0;
+            IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[product_name]') AND name = 'Views1Month')
+                ALTER TABLE [dbo].[product_name] ADD [Views1Month] INT NOT NULL DEFAULT 0;
+            IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[product_name]') AND name = 'Views3Months')
+                ALTER TABLE [dbo].[product_name] ADD [Views3Months] INT NOT NULL DEFAULT 0;
+            IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[product_name]') AND name = 'Views6Months')
+                ALTER TABLE [dbo].[product_name] ADD [Views6Months] INT NOT NULL DEFAULT 0;
+            IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[product_name]') AND name = 'Views1Year')
+                ALTER TABLE [dbo].[product_name] ADD [Views1Year] INT NOT NULL DEFAULT 0;
+        ");
+
+        Console.WriteLine("Idempotent database schema verification & migration completed successfully.");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Database Creation Warning: {ex.Message}");
+        Console.WriteLine($"Database Creation/Migration Exception: {ex.Message}");
     }
 }
 

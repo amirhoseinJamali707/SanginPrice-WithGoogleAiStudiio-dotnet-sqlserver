@@ -698,11 +698,11 @@ const ProductModal = ({
 
   useEffect(() => {
     if (editData) {
-      setTargetName(editData.targetName || '');
-      setTargetModel(editData.targetModel || '');
-      setPartNumber(editData.partNumber || '');
-      setProductInformation(editData.productInformation || '');
-      setSrtId(editData.srtId || '');
+      setTargetName(editData.targetName || editData.TargetName || '');
+      setTargetModel(editData.targetModel || editData.TargetModel || '');
+      setPartNumber(editData.partNumber || editData.PartNumber || '');
+      setProductInformation(editData.productInformation || editData.ProductInformation || '');
+      setSrtId(editData.srtId || editData.srtID || editData.SRTID || editData.srtid || '');
     } else if (nameOptions.length > 0) {
       setTargetName(nameOptions[0]);
       setTargetModel('');
@@ -3127,29 +3127,18 @@ const MachinePartListPage = () => {
                 onClick={() => navigate(`/quotes/${item.name}`)}
                 className="flex-1 flex flex-col gap-1"
               >
-                <div className="flex items-center gap-2">
-                  {item.srtId && (
-                    <div 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setVisibleSrtId(visibleSrtId === item.productId ? null : item.productId);
-                      }}
-                      className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
-                      title="نمایش SRTID"
-                    />
-                  )}
+                <div className="flex items-center gap-2 flex-wrap">
                   <div className="flex flex-col">
                     <h4 className="font-bold text-slate-800 group-hover:text-amber-700 transition-colors uppercase">{item.name}</h4>
-                    {visibleSrtId === item.productId && (
-                      <motion.span 
-                        initial={{ opacity: 0, x: 5 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className="text-[10px] font-mono text-emerald-600 font-bold"
-                      >
-                        {item.srtId}
-                      </motion.span>
-                    )}
                   </div>
+                  {(() => {
+                    const srtVal = item.srtId || item.srtID || item.SRTID || item.srtid;
+                    return srtVal ? (
+                      <span className="text-[10px] font-mono font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md border border-emerald-200">
+                        SRTID: {srtVal}
+                      </span>
+                    ) : null;
+                  })()}
                 </div>
               </div>
               
