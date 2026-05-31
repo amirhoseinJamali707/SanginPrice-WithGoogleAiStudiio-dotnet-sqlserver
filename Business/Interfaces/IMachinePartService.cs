@@ -9,6 +9,10 @@ public interface IMachinePartService
     Task<MachinePartDto?> CreatePartAsync(MachinePartDto dto);
     Task<MachinePartDto?> UpdatePartAsync(int productId, MachinePartDto dto);
     Task<bool> DeletePartAsync(int productId);
+    Task<IEnumerable<MachinePartDto>> GetUnlinkedPartsAsync(string? search);
+    Task<IEnumerable<MachinePartDto>> GetDeletedPartsAsync(string? search);
+    Task<IEnumerable<MachinePartDto>> GetNewPartsAsync(string? search);
+    Task<IEnumerable<MachinePartDto>> GetAllPartsAsync(string? search);
     Task<BulkPartUploadResultDto> BulkUploadPartsAsync(List<MachinePartDto> items, bool isMethod2);
 }
 

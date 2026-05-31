@@ -10,6 +10,7 @@ import {
 } from 'react-router-dom';
 import { ReportsPage } from './components/ReportsPage';
 import { PersonsCardexPage } from './components/PersonsCardexPage';
+import AdvancedProductsPage from './components/AdvancedProductsPage';
 import { 
   ArrowLeft, 
   Search, 
@@ -35,7 +36,8 @@ import {
   Download,
   Upload,
   Info,
-  Notebook
+  Notebook,
+  Sliders
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -366,7 +368,7 @@ const PriceModal = ({
         // Add fields for NEW quote
         body.ProductName = productName;
         if (productId) {
-          body.ProductID = Number(productId);
+          body.ProductID = isNaN(Number(productId)) ? productId : Number(productId);
         }
         body.From = userName;
         body.LastPriceUpdateDate = getPersianDate();
@@ -740,7 +742,25 @@ const ProductModal = ({
         // Only for new products
         body.PartName = categoryName;
         body.OtherNames = categoryInfo?.OtherNames;
-        body.PartID = Number(categoryInfo?.Id || categoryInfo?.PartID);
+        const rawPartID = categoryInfo?.Id || categoryInfo?.PartID;
+        body.PartID = rawPartID ? (isNaN(Number(rawPartID)) ? rawPartID : Number(rawPartID)) : 0;
+      } else {
+        // For editing, ensure PartID, PartName, OtherNames are preserved by sending them
+        const rawPartID = editData.PartID || editData.partID || categoryInfo?.Id || categoryInfo?.PartID;
+        const prodId = editData.Id || editData.id || editData.productId || editData.ProductID;
+        
+        // Prevent mapped product ID instead of real category PartID
+        if (rawPartID && String(rawPartID) !== String(prodId)) {
+          body.PartID = isNaN(Number(rawPartID)) ? rawPartID : Number(rawPartID);
+        } else {
+          const fallbackID = categoryInfo?.Id || categoryInfo?.PartID;
+          if (fallbackID) {
+            body.PartID = isNaN(Number(fallbackID)) ? fallbackID : Number(fallbackID);
+          }
+        }
+        
+        body.PartName = editData.PartName || editData.partName || categoryName;
+        body.OtherNames = editData.OtherNames || editData.otherNames || categoryInfo?.OtherNames || '';
       }
 
       const res = await fetch(url, {
@@ -1465,6 +1485,17 @@ const Layout = ({
                           <Notebook size={15} className="text-amber-500" />
                           <span>کاردکس اشخاص</span>
                         </a>
+
+                        <button
+                          onClick={() => {
+                            setIsMenuOpen(false);
+                            navigate('/advanced-products');
+                          }}
+                          className="w-full text-right px-4 py-2.5 hover:bg-slate-50 hover:text-amber-600 transition-colors flex items-center gap-2 border-t border-slate-100 font-bold text-slate-700"
+                        >
+                          <Sliders size={15} className="text-amber-500" />
+                          <span>مدیریت پیشرفته محصولات</span>
+                        </button>
                       </div>
                     </>
                   )}
@@ -3944,6 +3975,7 @@ export default function App() {
             <Route path="/quotes/:productTitle" element={<PriceQuoteListPage dollarRate={dollarRate} userName={userName} />} />
             <Route path="/reports" element={<ReportsPage />} />
             <Route path="/persons-cardex" element={<PersonsCardexPage />} />
+            <Route path="/advanced-products" element={<AdvancedProductsPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Layout>

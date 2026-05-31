@@ -631,6 +631,91 @@ async function startServer() {
     }
   });
 
+  // Extra specific endpoints for Advanced Products management
+  app.get('/api/machine-parts/new', (req, res) => {
+    try {
+      const { search } = req.query;
+      const db = loadDb();
+      let filtered = db.product_name.filter((p: any) => p.Status === 'New');
+
+      if (search) {
+        const term = String(search).toLowerCase();
+        filtered = filtered.filter((p: any) => 
+          (p.ProductName || '').toLowerCase().includes(term) ||
+          (p.TargetName || '').toLowerCase().includes(term) ||
+          (p.TargetModel || '').toLowerCase().includes(term) ||
+          (p.PartNumber || '').toLowerCase().includes(term)
+        );
+      }
+      res.json(filtered);
+    } catch (err) {
+      res.status(500).json({ error: 'خطا در دریافت لیست محصولات جدید' });
+    }
+  });
+
+  app.get('/api/machine-parts/unlinked', (req, res) => {
+    try {
+      const { search } = req.query;
+      const db = loadDb();
+      let filtered = db.product_name.filter((p: any) => (!p.PartID || String(p.PartID) === '0' || String(p.PartID) === '') && p.Status !== 'deleted');
+
+      if (search) {
+        const term = String(search).toLowerCase();
+        filtered = filtered.filter((p: any) => 
+          (p.ProductName || '').toLowerCase().includes(term) ||
+          (p.TargetName || '').toLowerCase().includes(term) ||
+          (p.TargetModel || '').toLowerCase().includes(term) ||
+          (p.PartNumber || '').toLowerCase().includes(term)
+        );
+      }
+      res.json(filtered);
+    } catch (err) {
+      res.status(500).json({ error: 'خطا در دریافت لیست محصولات فاقد دسته‌بندی' });
+    }
+  });
+
+  app.get('/api/machine-parts/all-products', (req, res) => {
+    try {
+      const { search } = req.query;
+      const db = loadDb();
+      let filtered = db.product_name.filter((p: any) => p.Status !== 'deleted');
+
+      if (search) {
+        const term = String(search).toLowerCase();
+        filtered = filtered.filter((p: any) => 
+          (p.ProductName || '').toLowerCase().includes(term) ||
+          (p.TargetName || '').toLowerCase().includes(term) ||
+          (p.TargetModel || '').toLowerCase().includes(term) ||
+          (p.PartNumber || '').toLowerCase().includes(term)
+        );
+      }
+      res.json(filtered);
+    } catch (err) {
+      res.status(500).json({ error: 'خطا در دریافت لیست کل محصولات' });
+    }
+  });
+
+  app.get('/api/machine-parts/deleted', (req, res) => {
+    try {
+      const { search } = req.query;
+      const db = loadDb();
+      let filtered = db.product_name.filter((p: any) => p.Status === 'deleted');
+
+      if (search) {
+        const term = String(search).toLowerCase();
+        filtered = filtered.filter((p: any) => 
+          (p.ProductName || '').toLowerCase().includes(term) ||
+          (p.TargetName || '').toLowerCase().includes(term) ||
+          (p.TargetModel || '').toLowerCase().includes(term) ||
+          (p.PartNumber || '').toLowerCase().includes(term)
+        );
+      }
+      res.json(filtered);
+    } catch (err) {
+      res.status(500).json({ error: 'خطا در دریافت لیست محصولات حذف شده' });
+    }
+  });
+
   // Machine Parts
   app.get('/api/machine-parts', (req, res) => {
     try {
@@ -659,7 +744,10 @@ async function startServer() {
         targetName: item.TargetName,
         targetModel: item.TargetModel,
         partNumber: item.PartNumber,
-        productInformation: item.ProductInformation
+        productInformation: item.ProductInformation,
+        PartID: item.PartID,
+        PartName: item.PartName,
+        OtherNames: item.OtherNames
       }));
 
       res.json(results);
@@ -706,7 +794,18 @@ async function startServer() {
   app.patch('/api/machine-parts/:productId', (req, res) => {
     try {
       const { productId } = req.params;
-      const { TargetName, TargetModel, ProductName, PartNumber, ProductInformation, SRTID } = req.body;
+      const { 
+        TargetName, 
+        TargetModel, 
+        ProductName, 
+        PartNumber, 
+        ProductInformation, 
+        SRTID, 
+        PartID, 
+        PartName, 
+        OtherNames, 
+        Status 
+      } = req.body;
       const actingUsername = String(req.headers['x-username'] || 'admin');
 
       const db = loadDb();
@@ -718,21 +817,68 @@ async function startServer() {
       const oldDoc = db.product_name.find((p: any) => String(p.Id || p.id || p.ProductID || p.productId) === String(productId));
       if (!oldDoc) return res.status(404).json({ error: 'محصول یافت نشد' });
 
+      // Automatically sync PartName and OtherNames if PartID was updated but those name fields were not explicitly supplied
+      let resolvedPartName = PartName;
+      let resolvedOtherNames = OtherNames;
+      if (PartID !== undefined) {
+        const catDoc = db.part_name.find((cat: any) => String(cat.Id) === String(PartID));
+        if (catDoc) {
+          if (resolvedPartName === undefined) resolvedPartName = catDoc.PartName;
+          if (resolvedOtherNames === undefined) resolvedOtherNames = catDoc.OtherNames || '';
+        }
+      }
+
       db.product_name = db.product_name.map((p: any) => {
         if (String(p.Id || p.id || p.ProductID || p.productId) === String(productId)) {
-          return { ...p, TargetName, TargetModel, ProductName, PartNumber, ProductInformation, SRTID };
+          const updated = { ...p };
+          if (TargetName !== undefined) updated.TargetName = TargetName;
+          if (TargetModel !== undefined) updated.TargetModel = TargetModel;
+          if (ProductName !== undefined) updated.ProductName = ProductName;
+          if (PartNumber !== undefined) updated.PartNumber = PartNumber;
+          if (ProductInformation !== undefined) updated.ProductInformation = ProductInformation;
+          if (SRTID !== undefined) updated.SRTID = SRTID;
+          if (PartID !== undefined) updated.PartID = PartID;
+          if (resolvedPartName !== undefined) updated.PartName = resolvedPartName;
+          if (resolvedOtherNames !== undefined) updated.OtherNames = resolvedOtherNames;
+          if (Status !== undefined) updated.Status = Status;
+          return updated;
         }
         return p;
       });
 
       db.product_prices = db.product_prices.map((p: any) => {
         if (String(p.ProductID || p.productID || p.productId || p.Id || p.id) === String(productId)) {
-          return { ...p, TargetName, TargetModel, ProductName, PartNumber, ProductInformation, SRTID };
+          const updated = { ...p };
+          if (TargetName !== undefined) updated.TargetName = TargetName;
+          if (TargetModel !== undefined) updated.TargetModel = TargetModel;
+          if (ProductName !== undefined) updated.ProductName = ProductName;
+          if (PartNumber !== undefined) updated.PartNumber = PartNumber;
+          if (ProductInformation !== undefined) updated.ProductInformation = ProductInformation;
+          if (SRTID !== undefined) updated.SRTID = SRTID;
+          if (PartID !== undefined) updated.PartID = PartID;
+          if (resolvedPartName !== undefined) updated.PartName = resolvedPartName;
+          if (resolvedOtherNames !== undefined) updated.OtherNames = resolvedOtherNames;
+          if (Status !== undefined) updated.Status = Status;
+          return updated;
         }
         return p;
       });
 
-      logActivity(db, actingUsername, 'update_product', productId, 'Product', `کاربر ${actingUsername} مشخصات محصول "${ProductName}" را ویرایش نمود.`, { old: oldDoc, new: { TargetName, TargetModel, ProductName, PartNumber, ProductInformation, SRTID } });
+      logActivity(db, actingUsername, 'update_product', productId, 'Product', `کاربر ${actingUsername} مشخصات محصول "${ProductName || oldDoc.ProductName}" را ویرایش نمود.`, { 
+        old: oldDoc, 
+        new: { 
+          TargetName: TargetName !== undefined ? TargetName : oldDoc.TargetName, 
+          TargetModel: TargetModel !== undefined ? TargetModel : oldDoc.TargetModel, 
+          ProductName: ProductName !== undefined ? ProductName : oldDoc.ProductName, 
+          PartNumber: PartNumber !== undefined ? PartNumber : oldDoc.PartNumber, 
+          ProductInformation: ProductInformation !== undefined ? ProductInformation : oldDoc.ProductInformation, 
+          SRTID: SRTID !== undefined ? SRTID : oldDoc.SRTID,
+          PartID: PartID !== undefined ? PartID : oldDoc.PartID,
+          PartName: resolvedPartName !== undefined ? resolvedPartName : oldDoc.PartName,
+          OtherNames: resolvedOtherNames !== undefined ? resolvedOtherNames : oldDoc.OtherNames,
+          Status: Status !== undefined ? Status : oldDoc.Status
+        } 
+      });
       res.json({ success: true });
     } catch (err) {
       res.status(500).json({ error: 'خطا در ویرایش محصول' });

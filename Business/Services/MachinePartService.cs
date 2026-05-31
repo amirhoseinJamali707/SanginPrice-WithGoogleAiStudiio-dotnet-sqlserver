@@ -19,7 +19,7 @@ public class MachinePartService : IMachinePartService
     {
         var query = from m in _context.MachineParts
                     join c in _context.ProductCategories on m.PartID equals c.Id
-                    where m.PartID == partId
+                    where m.PartID == partId && m.ProductStatus != "Deleted"
                     select new { m, c.PartName, c.OtherNames };
 
         if (!string.IsNullOrWhiteSpace(search))
@@ -102,9 +102,8 @@ public class MachinePartService : IMachinePartService
         var part = await _context.MachineParts.FirstOrDefaultAsync(p => p.Id == productId);
         if (part == null) return null;
 
-        var categoryId = dto.PartID > 0 ? dto.PartID : part.PartID;
+        var categoryId = dto.PartID;
         var matchingCat = await _context.ProductCategories.FirstOrDefaultAsync(c => c.Id == categoryId);
-        if (matchingCat == null) return null;
 
         part.PartID = categoryId;
         part.TargetName = dto.TargetName;
@@ -118,8 +117,8 @@ public class MachinePartService : IMachinePartService
         await _context.SaveChangesAsync();
 
         dto.ProductID = productId;
-        dto.PartName = matchingCat.PartName;
-        dto.OtherNames = matchingCat.OtherNames;
+        dto.PartName = matchingCat?.PartName ?? "";
+        dto.OtherNames = matchingCat?.OtherNames ?? "";
         return dto;
     }
 
@@ -128,13 +127,149 @@ public class MachinePartService : IMachinePartService
         var part = await _context.MachineParts.FirstOrDefaultAsync(p => p.Id == productId);
         if (part == null) return false;
 
-        _context.MachineParts.Remove(part);
-
-        // Delete prices associated with this product
-        var prices = await _context.ProductPrices.Where(pr => pr.ProductID == productId).ToListAsync();
-        _context.ProductPrices.RemoveRange(prices);
-
+        part.ProductStatus = "Deleted";
         return await _context.SaveChangesAsync() > 0;
+    }
+
+    public async Task<IEnumerable<MachinePartDto>> GetUnlinkedPartsAsync(string? search)
+    {
+        var categoryIds = await _context.ProductCategories.Select(c => c.Id).ToListAsync();
+        var query = _context.MachineParts.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToLower();
+            query = query.Where(x => x.ProductName.ToLower().Contains(term)
+                                  || (x.PartNumber != null && x.PartNumber.ToLower().Contains(term)));
+        }
+
+        var list = await query
+            .Where(p => p.ProductStatus != "Deleted" && (!categoryIds.Contains(p.PartID) || p.PartID <= 0))
+            .ToListAsync();
+
+        return list.Select(x => new MachinePartDto
+        {
+            PartName = "",
+            OtherNames = "",
+            PartID = x.PartID,
+            TargetName = x.TargetName,
+            TargetModel = x.TargetModel,
+            ProductName = x.ProductName,
+            PartNumber = x.PartNumber,
+            ProductInformation = x.ProductInformation,
+            ProductID = x.Id,
+            SRTID = x.SrtID,
+            Status = x.ProductStatus
+        });
+    }
+
+    public async Task<IEnumerable<MachinePartDto>> GetDeletedPartsAsync(string? search)
+    {
+        var query = _context.MachineParts.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToLower();
+            query = query.Where(x => x.ProductName.ToLower().Contains(term)
+                                  || (x.PartNumber != null && x.PartNumber.ToLower().Contains(term)));
+        }
+
+        var list = await query
+            .Where(p => p.ProductStatus == "Deleted")
+            .ToListAsync();
+
+        var categories = await _context.ProductCategories.ToDictionaryAsync(c => c.Id);
+
+        return list.Select(x => {
+            categories.TryGetValue(x.PartID, out var c);
+            return new MachinePartDto
+            {
+                PartName = c?.PartName ?? "",
+                OtherNames = c?.OtherNames ?? "",
+                PartID = x.PartID,
+                TargetName = x.TargetName,
+                TargetModel = x.TargetModel,
+                ProductName = x.ProductName,
+                PartNumber = x.PartNumber,
+                ProductInformation = x.ProductInformation,
+                ProductID = x.Id,
+                SRTID = x.SrtID,
+                Status = x.ProductStatus
+            };
+        }).ToList();
+    }
+
+    public async Task<IEnumerable<MachinePartDto>> GetNewPartsAsync(string? search)
+    {
+        var query = _context.MachineParts.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToLower();
+            query = query.Where(x => x.ProductName.ToLower().Contains(term)
+                                  || (x.PartNumber != null && x.PartNumber.ToLower().Contains(term)));
+        }
+
+        var list = await query
+            .Where(p => p.ProductStatus == "New")
+            .ToListAsync();
+
+        var categories = await _context.ProductCategories.ToDictionaryAsync(c => c.Id);
+
+        return list.Select(x => {
+            categories.TryGetValue(x.PartID, out var c);
+            return new MachinePartDto
+            {
+                PartName = c?.PartName ?? "",
+                OtherNames = c?.OtherNames ?? "",
+                PartID = x.PartID,
+                TargetName = x.TargetName,
+                TargetModel = x.TargetModel,
+                ProductName = x.ProductName,
+                PartNumber = x.PartNumber,
+                ProductInformation = x.ProductInformation,
+                ProductID = x.Id,
+                SRTID = x.SrtID,
+                Status = x.ProductStatus
+            };
+        }).ToList();
+    }
+
+    public async Task<IEnumerable<MachinePartDto>> GetAllPartsAsync(string? search)
+    {
+        var query = _context.MachineParts.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToLower();
+            query = query.Where(x => x.ProductName.ToLower().Contains(term)
+                                  || (x.PartNumber != null && x.PartNumber.ToLower().Contains(term))
+                                  || (x.SrtID != null && x.SrtID.ToLower().Contains(term)));
+        }
+
+        var list = await query
+            .Where(p => p.ProductStatus != "Deleted")
+            .ToListAsync();
+
+        var categories = await _context.ProductCategories.ToDictionaryAsync(c => c.Id);
+
+        return list.Select(x => {
+            categories.TryGetValue(x.PartID, out var c);
+            return new MachinePartDto
+            {
+                PartName = c?.PartName ?? "",
+                OtherNames = c?.OtherNames ?? "",
+                PartID = x.PartID,
+                TargetName = x.TargetName,
+                TargetModel = x.TargetModel,
+                ProductName = x.ProductName,
+                PartNumber = x.PartNumber,
+                ProductInformation = x.ProductInformation,
+                ProductID = x.Id,
+                SRTID = x.SrtID,
+                Status = x.ProductStatus
+            };
+        }).ToList();
     }
 
     public async Task<BulkPartUploadResultDto> BulkUploadPartsAsync(List<MachinePartDto> items, bool isMethod2)

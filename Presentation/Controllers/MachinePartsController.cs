@@ -42,6 +42,34 @@ public class MachinePartsController : ControllerBase
         return Ok(parts);
     }
 
+    [HttpGet("unlinked")]
+    public async Task<IActionResult> GetUnlinked([FromQuery] string? search)
+    {
+        var parts = await _machService.GetUnlinkedPartsAsync(search);
+        return Ok(parts);
+    }
+
+    [HttpGet("deleted")]
+    public async Task<IActionResult> GetDeleted([FromQuery] string? search)
+    {
+        var parts = await _machService.GetDeletedPartsAsync(search);
+        return Ok(parts);
+    }
+
+    [HttpGet("new")]
+    public async Task<IActionResult> GetNew([FromQuery] string? search)
+    {
+        var parts = await _machService.GetNewPartsAsync(search);
+        return Ok(parts);
+    }
+
+    [HttpGet("all-products")]
+    public async Task<IActionResult> GetAll([FromQuery] string? search)
+    {
+        var parts = await _machService.GetAllPartsAsync(search);
+        return Ok(parts);
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] MachinePartDto dto)
     {
