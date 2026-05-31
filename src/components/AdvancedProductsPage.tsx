@@ -332,13 +332,67 @@ export default function AdvancedProductsPage() {
   const handleSaveCategoryLink = async () => {
     if (!selectedProductForCategory) return;
     try {
+      const finalTargetName = inlineEdits[selectedProductForCategory.ProductID]?.targetName !== undefined 
+        ? inlineEdits[selectedProductForCategory.ProductID].targetName 
+        : (selectedProductForCategory.TargetName || '');
+
+      const finalTargetModel = inlineEdits[selectedProductForCategory.ProductID]?.targetModel !== undefined 
+        ? inlineEdits[selectedProductForCategory.ProductID].targetModel 
+        : (selectedProductForCategory.TargetModel || '');
+
+      const calculatedProductName = `${finalTargetName} ${finalTargetModel}`.trim();
+      const finalPartID = isNaN(Number(selectedCategoryId)) ? selectedCategoryId : Number(selectedCategoryId);
+
+      // 1. First order of operation: Append targetName to target category's OtherNames if not present
+      if (finalPartID && finalPartID !== 0 && finalPartID !== '0') {
+        const targetCategory = categories.find(c => String(c.Id) === String(finalPartID));
+        if (targetCategory && finalTargetName.trim()) {
+          const partNameLower = targetCategory.PartName.trim().toLowerCase();
+          const otherNamesLower = (targetCategory.OtherNames || '').trim().toLowerCase();
+          const targetLower = finalTargetName.trim().toLowerCase();
+
+          const inPartName = partNameLower === targetLower;
+          const inOtherNames = otherNamesLower.split(/[,،]/).map(x => x.trim().toLowerCase()).includes(targetLower);
+
+          if (!inPartName && !inOtherNames) {
+            const currentOthers = targetCategory.OtherNames || '';
+            const newOtherNames = currentOthers 
+              ? `${currentOthers}، ${finalTargetName.trim()}` 
+              : finalTargetName.trim();
+
+            const catRes = await fetch(`/api/categories/${finalPartID}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                PartName: targetCategory.PartName,
+                OtherNames: newOtherNames
+              })
+            });
+
+            if (catRes.ok) {
+              await fetchCategories(); // Refresh local category cache
+            }
+          }
+        }
+      }
+
+      // 2. Second order of operation: Save product's target category link (PartID), keeping TargetName and TargetModel intact
+      const partBody = {
+        ProductID: selectedProductForCategory.ProductID,
+        PartID: finalPartID,
+        TargetName: finalTargetName,
+        TargetModel: finalTargetModel,
+        ProductName: calculatedProductName,
+        PartNumber: selectedProductForCategory.PartNumber || '',
+        ProductInformation: selectedProductForCategory.ProductInformation || '',
+        SRTID: selectedProductForCategory.SRTID || '',
+        Status: selectedProductForCategory.Status || 'Active'
+      };
+
       const response = await fetch(`/api/machine-parts/${selectedProductForCategory.ProductID}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ProductID: selectedProductForCategory.ProductID,
-          PartID: isNaN(Number(selectedCategoryId)) ? selectedCategoryId : Number(selectedCategoryId)
-        })
+        body: JSON.stringify(partBody)
       });
 
       if (response.ok) {
