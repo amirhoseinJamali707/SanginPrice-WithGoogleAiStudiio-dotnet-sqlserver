@@ -735,7 +735,8 @@ const ProductModal = ({
         ProductName: productName,
         PartNumber: partNumber,
         ProductInformation: productInformation,
-        SRTID: srtId
+        SRTID: srtId,
+        Status: editData ? (editData.Status || 'Active') : 'Active'
       };
 
       if (!editData) {

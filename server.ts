@@ -758,7 +758,7 @@ async function startServer() {
 
   app.post('/api/machine-parts', (req, res) => {
     try {
-      const { PartName, OtherNames, PartID, TargetName, TargetModel, ProductName, PartNumber, ProductInformation, Id, SRTID } = req.body;
+      const { PartName, OtherNames, PartID, TargetName, TargetModel, ProductName, PartNumber, ProductInformation, Id, SRTID, Status, ProductStatus } = req.body;
       const actingUsername = String(req.headers['x-username'] || 'admin');
 
       const db = loadDb();
@@ -778,7 +778,7 @@ async function startServer() {
         ProductInformation,
         Id: Id || `PD${Math.floor(100000 + Math.random() * 900000)}`,
         SRTID,
-        Status: 'New',
+        Status: Status || ProductStatus || 'Active',
         view_count: 0, views_1month: 0, views_3months: 0, views_6months: 0, views_1year: 0
       };
 
